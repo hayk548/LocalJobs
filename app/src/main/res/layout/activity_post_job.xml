@@ -1,0 +1,38 @@
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/jobTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Job Title"/>
+
+    <EditText
+        android:id="@+id/jobDescription"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Job Description"/>
+
+    <EditText
+        android:id="@+id/jobLocation"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Job Location"/>
+
+    <EditText
+        android:id="@+id/jobSalary"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Salary (Optional)"/>
+
+    <Button
+        android:id="@+id/postJobButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Post Job"/>
+
+</LinearLayout>

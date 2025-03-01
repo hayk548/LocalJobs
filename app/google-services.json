@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "407700586650",
+    "project_id": "localjobs-1e4eb",
+    "storage_bucket": "localjobs-1e4eb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:407700586650:android:5ec0dac08d82d4a0899f23",
+        "android_client_info": {
+          "package_name": "com.example.localjobs"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "407700586650-kea1hck03v4gjqpqlstou883nbp81j5l.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.localjobs",
+            "certificate_hash": "da39a3ee5e6b4b0d3255bfef95601890afd80709"
+          }
+        },
+        {
+          "client_id": "407700586650-j8inbaafja77ob563n0n9djjka0tp9po.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAueEATYrNzZvNh1H-1cXzIAOwFTsN0ud8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "407700586650-j8inbaafja77ob563n0n9djjka0tp9po.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
