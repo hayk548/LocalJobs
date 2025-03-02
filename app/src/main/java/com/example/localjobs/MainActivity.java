@@ -67,8 +67,10 @@ public class MainActivity extends AppCompatActivity {
 
         if (rememberMeCheckbox.isChecked()) {
             saveUserEmail(userEmail);
+            saveUserPassword(userPassword);
         } else {
             clearSavedEmail();
+            clearSavedPassword();
         }
 
         mAuth.signInWithEmailAndPassword(userEmail, userPassword)
@@ -98,11 +100,24 @@ public class MainActivity extends AppCompatActivity {
         editor.remove("savedEmail");
         editor.apply();
     }
+    private void saveUserPassword(String password) {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putString("savedPassword", password);
+        editor.apply();
+    }
+
+    private void clearSavedPassword() {
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.remove("savedPassword");
+        editor.apply();
+    }
 
     private void loadRememberedUser() {
         String savedEmail = sharedPreferences.getString("savedEmail", "");
+        String savedPassword = sharedPreferences.getString("savedPassword", "");
         if (!savedEmail.isEmpty()) {
             email.setText(savedEmail);
+            password.setText(savedPassword);
             rememberMeCheckbox.setChecked(true);
         }
     }
