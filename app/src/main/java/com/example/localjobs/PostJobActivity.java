@@ -1,5 +1,6 @@
 package com.example.localjobs;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -68,6 +69,8 @@ public class PostJobActivity extends AppCompatActivity {
                 .add(job)
                 .addOnSuccessListener(documentReference -> {
                     Toast.makeText(PostJobActivity.this, "Job posted successfully!", Toast.LENGTH_SHORT).show();
+                    Intent intent = new Intent(PostJobActivity.this, JobsActivity.class);
+                    startActivity(intent);
                     finish();
                 })
                 .addOnFailureListener(e -> {

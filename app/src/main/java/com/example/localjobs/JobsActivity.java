@@ -21,12 +21,15 @@ public class JobsActivity extends AppCompatActivity {
     private FirebaseFirestore db;
     private Button postJobButton;
 
+    private Button accountButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_jobs);
 
         postJobButton = findViewById(R.id.postJobButton);
+        accountButton = findViewById(R.id.accountButton);
         jobsRecyclerView = findViewById(R.id.jobsRecyclerView);
 
         db = FirebaseFirestore.getInstance();
@@ -43,6 +46,10 @@ public class JobsActivity extends AppCompatActivity {
             public void onClick(View v) {
                 startActivity(new Intent(JobsActivity.this, PostJobActivity.class));
             }
+        });
+        accountButton.setOnClickListener(view -> {
+            Intent intent = new Intent(JobsActivity.this, AccountActivity.class);
+            startActivity(intent);
         });
     }
 
