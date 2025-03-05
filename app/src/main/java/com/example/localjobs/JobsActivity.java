@@ -34,7 +34,7 @@ public class JobsActivity extends AppCompatActivity {
 
         db = FirebaseFirestore.getInstance();
         jobList = new ArrayList<>();
-        jobAdapter = new JobAdapter(jobList);
+        jobAdapter = new JobAdapter(jobList, this);
 
         jobsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         jobsRecyclerView.setAdapter(jobAdapter);
@@ -52,6 +52,12 @@ public class JobsActivity extends AppCompatActivity {
             startActivity(intent);
         });
     }
+    @Override
+    protected void onResume() {
+        super.onResume();
+        loadJobs();
+    }
+
 
     private void loadJobs() {
         db.collection("jobs")

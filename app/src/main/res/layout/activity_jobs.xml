@@ -42,5 +42,5 @@
         android:id="@+id/jobsRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="46dp"/>
+        android:layout_marginTop="46dp" />
 </LinearLayout>

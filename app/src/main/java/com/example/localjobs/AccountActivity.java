@@ -132,7 +132,6 @@ public class AccountActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> Toast.makeText(AccountActivity.this, "Error changing password", Toast.LENGTH_SHORT).show());
     }
 
-    // Open image chooser to select profile picture
     private void openImageChooser() {
         Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
         intent.setType("image/*");

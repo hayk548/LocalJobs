@@ -66,7 +66,8 @@ public class PostJobActivity extends AppCompatActivity {
         Job job = new Job(jobId, title, description, location, salary, user.getUid());
 
         db.collection("jobs")
-                .add(job)
+                .document(jobId)
+                .set(job)
                 .addOnSuccessListener(documentReference -> {
                     Toast.makeText(PostJobActivity.this, "Job posted successfully!", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(PostJobActivity.this, JobsActivity.class);

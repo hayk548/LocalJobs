@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     tools:context=".AccountActivity">
 
-    <!-- Profile Image Section -->
     <ImageView
         android:id="@+id/imageViewProfile"
         android:layout_width="120dp"
