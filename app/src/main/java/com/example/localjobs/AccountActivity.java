@@ -46,14 +46,14 @@ public class AccountActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_account);
 
+        SignUpActivity a = new SignUpActivity();
+
         // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
         currentUser = mAuth.getCurrentUser();
 
-        // UI elements
-//        username = findViewById(R.id.textViewUsername1);
         editTextUsername = findViewById(R.id.editTextUsername);
         editTextNewPassword = findViewById(R.id.editTextNewPassword);
         btnSaveUsername = findViewById(R.id.btnSaveUsername);

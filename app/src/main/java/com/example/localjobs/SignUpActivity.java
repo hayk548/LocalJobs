@@ -22,7 +22,6 @@ public class SignUpActivity extends AppCompatActivity {
 
     private EditText email, password;
     private Button signupButton;
-    private CheckBox rememberMeCheckbox;
     private FirebaseAuth mAuth;
     private SharedPreferences sharedPreferences;
 
@@ -34,12 +33,10 @@ public class SignUpActivity extends AppCompatActivity {
         email = findViewById(R.id.email);
         password = findViewById(R.id.password);
         signupButton = findViewById(R.id.signupButton);
-        rememberMeCheckbox = findViewById(R.id.rememberMeCheckbox);
 
         mAuth = FirebaseAuth.getInstance();
         sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
 
-        loadRememberedUser();
 
         signupButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -68,12 +65,6 @@ public class SignUpActivity extends AppCompatActivity {
             return;
         }
 
-        if (rememberMeCheckbox.isChecked()) {
-            saveUserEmail(userEmail);
-        } else {
-            clearSavedEmail();
-        }
-
         mAuth.createUserWithEmailAndPassword(userEmail, userPassword)
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
@@ -97,25 +88,5 @@ public class SignUpActivity extends AppCompatActivity {
                         }
                     }
                 });
-    }
-
-    private void saveUserEmail(String email) {
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("savedEmail", email);
-        editor.apply();
-    }
-
-    private void clearSavedEmail() {
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.remove("savedEmail");
-        editor.apply();
-    }
-
-    private void loadRememberedUser() {
-        String savedEmail = sharedPreferences.getString("savedEmail", "");
-        if (!savedEmail.isEmpty()) {
-            email.setText(savedEmail);
-            rememberMeCheckbox.setChecked(true);
-        }
     }
 }

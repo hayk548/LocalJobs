@@ -36,6 +36,7 @@
         <activity android:name=".JobsActivity"/>
         <activity android:name=".MapsActivity" />
         <activity android:name=".AccountActivity" />
+        <activity android:name=".EditJobActivity" />
 
     </application>
 

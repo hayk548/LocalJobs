@@ -24,10 +24,10 @@
         android:hint="Job Location"/>
 
     <EditText
-        android:id="@+id/jobSalary"
+        android:id="@+id/jobDate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Salary (Optional)"/>
+        android:hint="Date"/>
 
     <Button
         android:id="@+id/postJobButton"

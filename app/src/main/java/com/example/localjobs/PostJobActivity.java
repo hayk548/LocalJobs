@@ -1,6 +1,8 @@
 package com.example.localjobs;
 
 import android.content.Intent;
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -13,11 +15,14 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.io.IOException;
+import java.util.List;
+import java.util.Locale;
 import java.util.UUID;
 
 public class PostJobActivity extends AppCompatActivity {
 
-    private EditText jobTitle, jobDescription, jobLocation, jobSalary;
+    private EditText jobTitle, jobDescription, jobLocation, jobDate;
     private Button postJobButton;
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
@@ -30,7 +35,7 @@ public class PostJobActivity extends AppCompatActivity {
         jobTitle = findViewById(R.id.jobTitle);
         jobDescription = findViewById(R.id.jobDescription);
         jobLocation = findViewById(R.id.jobLocation);
-        jobSalary = findViewById(R.id.jobSalary);
+        jobDate = findViewById(R.id.jobDate);
         postJobButton = findViewById(R.id.postJobButton);
 
         db = FirebaseFirestore.getInstance();
@@ -49,9 +54,9 @@ public class PostJobActivity extends AppCompatActivity {
         String title = jobTitle.getText().toString().trim();
         String description = jobDescription.getText().toString().trim();
         String location = jobLocation.getText().toString().trim();
-        String salary = jobSalary.getText().toString().trim();
+        String date = jobDate.getText().toString().trim();
 
-        if (title.isEmpty() || description.isEmpty() || location.isEmpty()) {
+        if (title.isEmpty() || description.isEmpty() || location.isEmpty() || date.isEmpty()) {
             Toast.makeText(this, "Please fill in all required fields", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -62,21 +67,24 @@ public class PostJobActivity extends AppCompatActivity {
             return;
         }
 
-        String jobId = UUID.randomUUID().toString();
-        Job job = new Job(jobId, title, description, location, salary, user.getUid());
+        Geocoder geocoder = new Geocoder(this, Locale.getDefault());
+        try {
+            List<Address> addresses = geocoder.getFromLocationName(location, 1);
+            if (!addresses.isEmpty()) {
+                double latitude = addresses.get(0).getLatitude();
+                double longitude = addresses.get(0).getLongitude();
 
-        db.collection("jobs")
-                .document(jobId)
-                .set(job)
-                .addOnSuccessListener(documentReference -> {
-                    Toast.makeText(PostJobActivity.this, "Job posted successfully!", Toast.LENGTH_SHORT).show();
-                    Intent intent = new Intent(PostJobActivity.this, JobsActivity.class);
-                    startActivity(intent);
-                    finish();
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(PostJobActivity.this, "Failed to post job", Toast.LENGTH_SHORT).show();
-                });
+                String jobId = UUID.randomUUID().toString();
+                Job job = new Job(jobId, title, description, location, date, user.getUid(), latitude, longitude);
 
+                db.collection("jobs").document(jobId).set(job)
+                        .addOnSuccessListener(aVoid -> Toast.makeText(this, "Job posted!", Toast.LENGTH_SHORT).show())
+                        .addOnFailureListener(e -> Toast.makeText(this, "Failed to post job", Toast.LENGTH_SHORT).show());
+            } else {
+                Toast.makeText(this, "Invalid location!", Toast.LENGTH_SHORT).show();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }

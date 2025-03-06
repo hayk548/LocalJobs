@@ -31,12 +31,21 @@
         android:layout_marginTop="4dp" />
 
     <TextView
-        android:id="@+id/jobSalary"
+        android:id="@+id/jobDate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Salary"
+        android:text="Date"
         android:textSize="14sp"
         android:layout_marginTop="4dp" />
+
+    <Button
+        android:id="@+id/editJobButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Edit Job"
+        android:layout_marginTop="8dp"
+        android:textColor="@android:color/white"
+        android:visibility="gone" />
 
     <!-- Delete Button (Only Visible to Job Creator) -->
     <Button
@@ -47,6 +56,6 @@
         android:layout_marginTop="8dp"
         android:backgroundTint="@android:color/holo_red_dark"
         android:textColor="@android:color/white"
-        android:visibility="gone" />  <!-- Hidden by default -->
+        android:visibility="gone" />
 
 </LinearLayout>
