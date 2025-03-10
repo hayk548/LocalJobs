@@ -91,7 +91,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                         // Calculate distance and add to list
                         double distance = calculateDistance(userLat, userLng, job.getLatitude(), job.getLongitude());
-                        jobList.add(new Job(job.getJobId(), job.getTitle(), job.getDescription(), job.getLocation(), job.getDate(), job.getUserId(), job.getLatitude(), job.getLongitude()));
+                        jobList.add(new Job(job.getJobId(), job.getTitle(), job.getDescription(), job.getLocation(), job.getDate(), job.getUserId(), job.getLatitude(), job.getLongitude(), job.getCategory()));
                     }
                 }
 

@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">LocalJobs</string>
+
+    <string-array name="job_categories">
+        <item>Software Development</item>
+        <item>Marketing</item>
+        <item>Design</item>
+        <item>Customer Support</item>
+        <item>Sales</item>
+    </string-array>
 </resources>

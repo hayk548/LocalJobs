@@ -5,8 +5,10 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -24,6 +26,7 @@ public class PostJobActivity extends AppCompatActivity {
 
     private EditText jobTitle, jobDescription, jobLocation, jobDate;
     private Button postJobButton;
+    private Spinner jobCategorySpinner;
     private FirebaseFirestore db;
     private FirebaseAuth mAuth;
 
@@ -36,6 +39,7 @@ public class PostJobActivity extends AppCompatActivity {
         jobDescription = findViewById(R.id.jobDescription);
         jobLocation = findViewById(R.id.jobLocation);
         jobDate = findViewById(R.id.jobDate);
+        jobCategorySpinner = findViewById(R.id.job_category);
         postJobButton = findViewById(R.id.postJobButton);
 
         db = FirebaseFirestore.getInstance();
@@ -48,6 +52,10 @@ public class PostJobActivity extends AppCompatActivity {
                 finish();
             }
         });
+        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+                R.array.job_categories, android.R.layout.simple_spinner_item);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        jobCategorySpinner.setAdapter(adapter);
     }
 
     private void postJob() {
@@ -55,8 +63,9 @@ public class PostJobActivity extends AppCompatActivity {
         String description = jobDescription.getText().toString().trim();
         String location = jobLocation.getText().toString().trim();
         String date = jobDate.getText().toString().trim();
+        String category = jobCategorySpinner.getSelectedItem().toString();
 
-        if (title.isEmpty() || description.isEmpty() || location.isEmpty() || date.isEmpty()) {
+        if (title.isEmpty() || description.isEmpty() || location.isEmpty() || date.isEmpty() || category.isEmpty()) {
             Toast.makeText(this, "Please fill in all required fields", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -75,7 +84,7 @@ public class PostJobActivity extends AppCompatActivity {
                 double longitude = addresses.get(0).getLongitude();
 
                 String jobId = UUID.randomUUID().toString();
-                Job job = new Job(jobId, title, description, location, date, user.getUid(), latitude, longitude);
+                Job job = new Job(jobId, title, description, location, date, user.getUid(), latitude, longitude, category);
 
                 db.collection("jobs").document(jobId).set(job)
                         .addOnSuccessListener(aVoid -> Toast.makeText(this, "Job posted!", Toast.LENGTH_SHORT).show())

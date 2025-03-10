@@ -30,6 +30,12 @@
         android:hint="Date"
         android:inputType="date"/>
 
+    <Spinner
+        android:id="@+id/job_category"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
+
     <Button
         android:id="@+id/postJobButton"
         android:layout_width="match_parent"

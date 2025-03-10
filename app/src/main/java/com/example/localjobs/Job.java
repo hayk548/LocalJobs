@@ -1,12 +1,23 @@
 package com.example.localjobs;
 
 public class Job {
-    private String jobId, title, description, location, date, userId;
-    private double latitude, longitude;
+    private String jobId;
+    private String title;
+    private String description;
+    private String location;
+    private String category;  // Add category field
+    private String date;
+    private String userId;
+    private double latitude;
+    private double longitude;
 
-    public Job() {}
+    public Job() {
+        // You can initialize the fields with default values if needed.
+    }
 
-    public Job(String jobId, String title, String description, String location, String date, String userId, double latitude, double longitude) {
+    // Constructor with all fields
+    public Job(String jobId, String title, String description, String location, String date,
+               String userId, double latitude, double longitude, String category) {
         this.jobId = jobId;
         this.title = title;
         this.description = description;
@@ -15,14 +26,79 @@ public class Job {
         this.userId = userId;
         this.latitude = latitude;
         this.longitude = longitude;
+        this.category = category;
     }
 
-    public double getLatitude() { return latitude; }
-    public double getLongitude() { return longitude; }
-    public String getJobId() { return jobId; }
-    public String getUserId() { return userId; }
-    public String getTitle() { return title; }
-    public String getDescription() { return description; }
-    public String getLocation() { return location; }
-    public String getDate() { return date; }
+    // Getters and Setters
+    public String getJobId() {
+        return jobId;
+    }
+
+    public void setJobId(String jobId) {
+        this.jobId = jobId;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    public String getCategory() {
+        return category;
+    }
+
+    public void setCategory(String category) {
+        this.category = category;
+    }
+
+    public String getDate() {
+        return date;
+    }
+
+    public void setDate(String date) {
+        this.date = date;
+    }
+
+    public String getUserId() {
+        return userId;
+    }
+
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
+    }
 }
