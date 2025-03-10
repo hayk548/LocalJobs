@@ -3,6 +3,7 @@ package com.example.localjobs;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -17,6 +18,7 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -24,6 +26,8 @@ public class MainActivity extends AppCompatActivity {
     private Button loginButton, signupButton;
     private CheckBox rememberMeCheckbox;
     private FirebaseAuth mAuth;
+    private String userId;
+    private FirebaseFirestore db;
     private SharedPreferences sharedPreferences;
 
     @Override
@@ -38,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
         rememberMeCheckbox = findViewById(R.id.rememberMeCheckbox);
 
         mAuth = FirebaseAuth.getInstance();
+        db = FirebaseFirestore.getInstance();
         sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
 
         loadRememberedUser();
@@ -81,6 +86,22 @@ public class MainActivity extends AppCompatActivity {
                     public void onComplete(@NonNull Task<AuthResult> task) {
                         if (task.isSuccessful()) {
                             Toast.makeText(MainActivity.this, "Login Successful", Toast.LENGTH_SHORT).show();
+                            userId = mAuth.getCurrentUser().getUid();
+                            db.collection("users").document(userId).get()
+                                    .addOnSuccessListener(documentSnapshot -> {
+                                        if (documentSnapshot.exists()) {
+                                            // User exists, proceed to JobsActivity
+                                            Intent intent = new Intent(MainActivity.this, JobsActivity.class);
+                                            startActivity(intent);
+                                            finish();
+                                        } else {
+                                            // User does not exist, create user document
+                                            createUserDocument(userId, userEmail);
+                                            Intent intent = new Intent(MainActivity.this, JobsActivity.class);
+                                            startActivity(intent);
+                                            finish();
+                                        }
+                                    });
                             Intent intent = new Intent(MainActivity.this, JobsActivity.class);
                             startActivity(intent);
                             finish();
@@ -123,4 +144,20 @@ public class MainActivity extends AppCompatActivity {
             rememberMeCheckbox.setChecked(true);
         }
     }
+    private void createUserDocument(String userId, String email) {
+        User newUser = new User(userId, email, ""); // You can add a username or other fields if needed
+        Log.d("MainActivity", "Creating user document for " + userId);
+
+        db.collection("users").document(userId)
+                .set(newUser)
+                .addOnSuccessListener(aVoid -> {
+                    Log.d("MainActivity", "User document created successfully.");
+                    Toast.makeText(MainActivity.this, "User document created", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("MainActivity", "Error creating user document: " + e.getMessage());
+                    Toast.makeText(MainActivity.this, "Error creating user document: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
 }

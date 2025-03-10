@@ -17,12 +17,14 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class SignUpActivity extends AppCompatActivity {
 
     private EditText email, password;
     private Button signupButton;
     private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
     private SharedPreferences sharedPreferences;
 
     @Override
@@ -34,6 +36,7 @@ public class SignUpActivity extends AppCompatActivity {
         password = findViewById(R.id.password);
         signupButton = findViewById(R.id.signupButton);
 
+        db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
         sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
 
@@ -76,6 +79,7 @@ public class SignUpActivity extends AppCompatActivity {
                                         .addOnCompleteListener(task1 -> {
                                             if (task1.isSuccessful()) {
                                                 Toast.makeText(SignUpActivity.this, "Verification email sent!", Toast.LENGTH_SHORT).show();
+                                                createUserDocument(userEmail, userPassword);
                                                 Intent intent = new Intent(SignUpActivity.this, WaitingForEmailActivity.class);
                                                 finish();
                                                 setContentView(R.layout.activity_waiting_for_email);
@@ -87,6 +91,18 @@ public class SignUpActivity extends AppCompatActivity {
                             Toast.makeText(SignUpActivity.this, "Sign Up Failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     }
+                });
+
+    }
+    private void createUserDocument(String userId, String email) {
+        User newUser = new User(userId, email, ""); // username can be a placeholder
+        db.collection("users").document(userId)
+                .set(newUser)
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(SignUpActivity.this, "User document created", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(SignUpActivity.this, "Error creating user document", Toast.LENGTH_SHORT).show();
                 });
     }
 }

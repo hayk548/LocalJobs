@@ -31,14 +31,16 @@ import java.io.ByteArrayOutputStream;
 public class AccountActivity extends AppCompatActivity {
 
     private static final int PICK_IMAGE_REQUEST = 1;
+    private static final int PICK_RESUME_REQUEST = 2;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
     private FirebaseStorage storage;
     private FirebaseUser currentUser;
     private Uri profileImageUri;
+    private Uri resumeUri;
     private TextView username;
     private EditText editTextUsername, editTextNewPassword;
-    private Button btnSaveUsername, btnChangePassword, btnUploadImage;
+    private Button btnSaveUsername, btnChangePassword, btnUploadImage, btnUploadResume;
     private ImageView imageViewProfile;
 
     @Override
@@ -46,19 +48,19 @@ public class AccountActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_account);
 
-        SignUpActivity a = new SignUpActivity();
-
         // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
         currentUser = mAuth.getCurrentUser();
+        String userId = mAuth.getCurrentUser().getUid();
 
         editTextUsername = findViewById(R.id.editTextUsername);
         editTextNewPassword = findViewById(R.id.editTextNewPassword);
         btnSaveUsername = findViewById(R.id.btnSaveUsername);
         btnChangePassword = findViewById(R.id.btnChangePassword);
         btnUploadImage = findViewById(R.id.btnUploadImage);
+        btnUploadResume = findViewById(R.id.btnUploadResume); // Add button to upload resume
         imageViewProfile = findViewById(R.id.imageViewProfile);
 
         // Check if user is logged in
@@ -90,6 +92,9 @@ public class AccountActivity extends AppCompatActivity {
 
         // Upload profile image
         btnUploadImage.setOnClickListener(v -> openImageChooser());
+
+        // Upload resume
+        btnUploadResume.setOnClickListener(v -> openResumeChooser());
     }
 
     // Load user data (username and profile image URL) from Firestore
@@ -107,9 +112,24 @@ public class AccountActivity extends AppCompatActivity {
                             // Load image using Picasso or any image loading library
                             Picasso.get().load(imageUrl).into(imageViewProfile);
                         }
+                    } else {
+                        createUserDocument(userId);
                     }
                 })
-                .addOnFailureListener(e -> Toast.makeText(AccountActivity.this, "Error loading data", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> {
+                    Toast.makeText(AccountActivity.this, "Error loading data", Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void createUserDocument(String userId) {
+        db.collection("users").document(userId)
+                .set(new User(userId, "Username", ""))
+                .addOnSuccessListener(aVoid -> {
+                    Toast.makeText(AccountActivity.this, "User document created", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(AccountActivity.this, "Error creating user document", Toast.LENGTH_SHORT).show();
+                });
     }
 
     // Update username in Firestore
@@ -150,6 +170,12 @@ public class AccountActivity extends AppCompatActivity {
             // Upload the image to Firebase Storage
             uploadProfileImage();
         }
+
+        // Handle resume chooser result
+        if (requestCode == PICK_RESUME_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
+            resumeUri = data.getData();
+            uploadResume();
+        }
     }
 
     // Upload profile image to Firebase Storage
@@ -172,6 +198,35 @@ public class AccountActivity extends AppCompatActivity {
                         });
                     })
                     .addOnFailureListener(e -> Toast.makeText(AccountActivity.this, "Error uploading image", Toast.LENGTH_SHORT).show());
+        }
+    }
+
+    // Open resume chooser (PDF or DOCX files)
+    private void openResumeChooser() {
+        Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+        intent.setType("application/pdf"); // You can change this type to support other formats (e.g., docx)
+        startActivityForResult(intent, PICK_RESUME_REQUEST);
+    }
+
+    // Upload resume to Firebase Storage
+    private void uploadResume() {
+        if (resumeUri != null) {
+            StorageReference resumeRef = storage.getReference("resumes/" + currentUser.getUid() + "_resume.pdf");
+            resumeRef.putFile(resumeUri)
+                    .addOnSuccessListener(taskSnapshot -> {
+                        resumeRef.getDownloadUrl().addOnSuccessListener(uri -> {
+                            String resumeUrl = uri.toString();
+
+                            // Save the resume URL to Firestore
+                            db.collection("users").document(currentUser.getUid())
+                                    .update("resume", resumeUrl)
+                                    .addOnSuccessListener(aVoid -> {
+                                        Toast.makeText(AccountActivity.this, "Resume uploaded successfully", Toast.LENGTH_SHORT).show();
+                                    })
+                                    .addOnFailureListener(e -> Toast.makeText(AccountActivity.this, "Error uploading resume", Toast.LENGTH_SHORT).show());
+                        });
+                    })
+                    .addOnFailureListener(e -> Toast.makeText(AccountActivity.this, "Error uploading resume", Toast.LENGTH_SHORT).show());
         }
     }
 }
