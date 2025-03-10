@@ -17,7 +17,7 @@ import java.util.Locale;
 
 public class EditJobActivity extends AppCompatActivity {
 
-    private EditText jobTitle, jobDescription, jobLocation;
+    private EditText jobTitle, jobDescription, jobLocation, jobDate; // Added jobDate
     private Button saveButton;
     private FirebaseFirestore db;
     private String jobId;
@@ -27,9 +27,11 @@ public class EditJobActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_job);
 
+        // Initialize fields including jobDate
         jobTitle = findViewById(R.id.job_title);
         jobDescription = findViewById(R.id.job_description);
         jobLocation = findViewById(R.id.job_location);
+        jobDate = findViewById(R.id.job_date); // Added job_date
         saveButton = findViewById(R.id.save_button);
         db = FirebaseFirestore.getInstance();
 
@@ -51,10 +53,12 @@ public class EditJobActivity extends AppCompatActivity {
                         String title = documentSnapshot.getString("title");
                         String description = documentSnapshot.getString("description");
                         String location = documentSnapshot.getString("location");
+                        String date = documentSnapshot.getString("date"); // Fetching date
 
                         jobTitle.setText(title);
                         jobDescription.setText(description);
                         jobLocation.setText(location);
+                        jobDate.setText(date); // Displaying date
                     }
                 })
                 .addOnFailureListener(e -> Toast.makeText(EditJobActivity.this, "Error loading job", Toast.LENGTH_SHORT).show());
@@ -64,8 +68,9 @@ public class EditJobActivity extends AppCompatActivity {
         String updatedTitle = jobTitle.getText().toString().trim();
         String updatedDescription = jobDescription.getText().toString().trim();
         String updatedLocation = jobLocation.getText().toString().trim();
+        String updatedDate = jobDate.getText().toString().trim(); // Get updated date
 
-        if (updatedTitle.isEmpty() || updatedDescription.isEmpty() || updatedLocation.isEmpty()) {
+        if (updatedTitle.isEmpty() || updatedDescription.isEmpty() || updatedLocation.isEmpty() || updatedDate.isEmpty()) {
             Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -78,10 +83,11 @@ public class EditJobActivity extends AppCompatActivity {
                 double latitude = addresses.get(0).getLatitude();
                 double longitude = addresses.get(0).getLongitude();
 
-                // Update the job in Firestore
+                // Update the job in Firestore with the updated date
                 db.collection("jobs").document(jobId)
                         .update("title", updatedTitle, "description", updatedDescription,
-                                "location", updatedLocation, "latitude", latitude, "longitude", longitude)
+                                "location", updatedLocation, "latitude", latitude, "longitude", longitude,
+                                "date", updatedDate) // Updating the date
                         .addOnSuccessListener(aVoid -> {
                             Toast.makeText(EditJobActivity.this, "Job updated successfully", Toast.LENGTH_SHORT).show();
                             finish();  // Close the activity

@@ -27,7 +27,8 @@
         android:id="@+id/jobDate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Date"/>
+        android:hint="Date"
+        android:inputType="date"/>
 
     <Button
         android:id="@+id/postJobButton"
