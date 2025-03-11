@@ -16,6 +16,14 @@
         android:layout_height="wrap_content"
         android:text="Nearest First"
         android:layout_margin="10dp"/>
+    <Button
+        android:id="@+id/openMapButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Show Map"
+        android:layout_margin="16dp"
+        android:layout_marginLeft="0dp"/>
+
 
     <EditText
         android:id="@+id/search_bar"

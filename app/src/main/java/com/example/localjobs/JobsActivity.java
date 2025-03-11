@@ -35,7 +35,7 @@ public class JobsActivity extends AppCompatActivity {
     private JobAdapter jobAdapter;
     private List<Job> jobList;
     private FirebaseFirestore db;
-    private Button postJobButton, accountButton, btnSortJobs;
+    private Button postJobButton, accountButton, btnSortJobs, openMapButton;
     private FusedLocationProviderClient fusedLocationClient;
     private double userLat = 0.0, userLng = 0.0;
     private boolean sortByNearest = true;
@@ -72,6 +72,15 @@ public class JobsActivity extends AppCompatActivity {
             sortByNearest = !sortByNearest;
             btnSortJobs.setText(sortByNearest ? "Nearest First" : "Farthest First");
             loadJobs();
+        });
+
+        openMapButton = findViewById(R.id.openMapButton);
+
+        openMapButton.setOnClickListener(v -> {
+            Intent intent = new Intent(JobsActivity.this, MapsActivity.class);
+            intent.putExtra("user_lat", userLat);
+            intent.putExtra("user_lng", userLng);
+            startActivity(intent);
         });
 
         // Add text watcher for search functionality
