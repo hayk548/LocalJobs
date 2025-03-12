@@ -9,6 +9,9 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.List;
 
@@ -37,9 +40,28 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
     @Override
     public void onBindViewHolder(JobViewHolder holder, int position) {
         Job job = jobList.get(position);
-        holder.jobTitle.setText(job.getTitle());
-        holder.jobCategory.setText(job.getCategory());
-        holder.jobDescription.setText(job.getDescription());
+        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
+        String currentUserId = (currentUser != null) ? currentUser.getUid() : "";
+
+        if (job.getTitle() != null) {
+            holder.jobTitle.setText(job.getTitle());
+        }
+        if (job.getCategory() != null) {
+            holder.jobCategory.setText(job.getCategory());
+        }
+        if (job.getDescription() != null) {
+            holder.jobDescription.setText(job.getDescription());
+        }
+
+        // Show edit & delete buttons only for the job creator
+        if (job.getUserId() != null && job.getUserId().equals(currentUserId)) {
+            holder.editButton.setVisibility(View.VISIBLE);
+            holder.deleteButton.setVisibility(View.VISIBLE);
+        } else {
+            holder.editButton.setVisibility(View.GONE);
+            holder.deleteButton.setVisibility(View.GONE);
+        }
+
 
         // Set up Apply button
         holder.applyButton.setOnClickListener(v -> {

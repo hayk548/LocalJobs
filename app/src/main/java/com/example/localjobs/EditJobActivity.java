@@ -5,6 +5,9 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 public class EditJobActivity extends AppCompatActivity {
@@ -53,9 +56,11 @@ public class EditJobActivity extends AppCompatActivity {
         String title = titleEditText.getText().toString();
         String description = descriptionEditText.getText().toString();
         String category = categoryEditText.getText().toString();
+        String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
 
         Job job = new Job();
         job.setJobId(jobId);
+        job.setUserId(userId);
         job.setTitle(title);
         job.setDescription(description);
         job.setCategory(category);
