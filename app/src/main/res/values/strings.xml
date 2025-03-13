@@ -7,5 +7,31 @@
         <item>Design</item>
         <item>Customer Support</item>
         <item>Sales</item>
+        <item>Data Science</item>
+        <item>Finance</item>
+        <item>Healthcare</item>
+        <item>Education</item>
+        <item>Human Resources</item>
+        <item>Legal</item>
+        <item>Engineering</item>
+        <item>IT, Networking</item>
+        <item>Project Management</item>
+        <item>Consulting</item>
+        <item>Real Estate</item>
+        <item>Manufacturing</item>
+        <item>Administrative</item>
+        <item>Operations</item>
+        <item>Transportation</item>
+        <item>Retail</item>
+        <item>Hospitality</item>
+        <item>Construction</item>
+        <item>Security</item>
+        <item>Government</item>
+        <item>Freelancing</item>
+        <item>Media, Communications</item>
+        <item>Event Management</item>
+        <item>Science, Research</item>
+        <item>Social Services</item>
     </string-array>
+
 </resources>
