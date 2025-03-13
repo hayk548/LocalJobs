@@ -1,11 +1,9 @@
 package com.example.localjobs;
 
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
@@ -21,11 +19,10 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 public class SignUpActivity extends AppCompatActivity {
 
-    private EditText email, password;
+    private EditText email, password, confirmPassword;
     private Button signupButton;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
-    private SharedPreferences sharedPreferences;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -34,12 +31,11 @@ public class SignUpActivity extends AppCompatActivity {
 
         email = findViewById(R.id.email);
         password = findViewById(R.id.password);
+        confirmPassword = findViewById(R.id.confirmPassword); // Confirm password field
         signupButton = findViewById(R.id.signupButton);
 
         db = FirebaseFirestore.getInstance();
         mAuth = FirebaseAuth.getInstance();
-        sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
-
 
         signupButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -52,6 +48,7 @@ public class SignUpActivity extends AppCompatActivity {
     private void signUpUser() {
         String userEmail = email.getText().toString().trim();
         String userPassword = password.getText().toString().trim();
+        String userConfirmPassword = confirmPassword.getText().toString().trim();
 
         if (userEmail.isEmpty()) {
             Toast.makeText(this, "Please enter your email", Toast.LENGTH_SHORT).show();
@@ -60,6 +57,16 @@ public class SignUpActivity extends AppCompatActivity {
 
         if (userPassword.isEmpty()) {
             Toast.makeText(this, "Please enter your password", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (userConfirmPassword.isEmpty()) {
+            Toast.makeText(this, "Please confirm your password", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (!userPassword.equals(userConfirmPassword)) {
+            Toast.makeText(this, "Passwords do not match", Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -79,11 +86,10 @@ public class SignUpActivity extends AppCompatActivity {
                                         .addOnCompleteListener(task1 -> {
                                             if (task1.isSuccessful()) {
                                                 Toast.makeText(SignUpActivity.this, "Verification email sent!", Toast.LENGTH_SHORT).show();
-                                                createUserDocument(userEmail, userPassword);
+                                                createUserDocument(user.getUid(), userEmail);
                                                 Intent intent = new Intent(SignUpActivity.this, WaitingForEmailActivity.class);
-                                                finish();
-                                                setContentView(R.layout.activity_waiting_for_email);
                                                 startActivity(intent);
+                                                finish();
                                             }
                                         });
                             }
@@ -92,17 +98,13 @@ public class SignUpActivity extends AppCompatActivity {
                         }
                     }
                 });
-
     }
+
     private void createUserDocument(String userId, String email) {
-        User newUser = new User(userId, email, ""); // username can be a placeholder
+        User newUser = new User(userId, email, "");
         db.collection("users").document(userId)
                 .set(newUser)
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(SignUpActivity.this, "User document created", Toast.LENGTH_SHORT).show();
-                })
-                .addOnFailureListener(e -> {
-                    Toast.makeText(SignUpActivity.this, "Error creating user document", Toast.LENGTH_SHORT).show();
-                });
+                .addOnSuccessListener(aVoid -> Toast.makeText(SignUpActivity.this, "User document created", Toast.LENGTH_SHORT).show())
+                .addOnFailureListener(e -> Toast.makeText(SignUpActivity.this, "Error creating user document", Toast.LENGTH_SHORT).show());
     }
 }

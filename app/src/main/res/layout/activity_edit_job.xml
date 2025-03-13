@@ -2,29 +2,42 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="#F1F8E9"
     android:padding="16dp">
 
+    <!-- Job Title EditText -->
     <EditText
         android:id="@+id/titleEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Job Title"/>
+        android:hint="Job Title"
+        android:textColor="#000000"
+        android:backgroundTint="#BBDEFB" />
 
+    <!-- Job Description EditText -->
     <EditText
         android:id="@+id/descriptionEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Job Description"/>
+        android:hint="Job Description"
+        android:textColor="#000000"
+        android:backgroundTint="#BBDEFB" />
 
+    <!-- Job Category EditText -->
     <EditText
         android:id="@+id/categoryEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Job Category"/>
+        android:hint="Job Category"
+        android:textColor="#000000"
+        android:backgroundTint="#BBDEFB" />
 
+    <!-- Save Changes Button -->
     <Button
         android:id="@+id/saveButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Save Changes" />
+        android:text="Save Changes"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#1976D2" />
 </LinearLayout>

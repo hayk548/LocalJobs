@@ -1,45 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="24dp"
+    android:background="#F1F8E9">
 
+    <!-- Job Title EditText -->
     <EditText
         android:id="@+id/jobTitle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Job Title"/>
+        android:hint="Job Title"
+        android:textColor="#000000"
+        android:backgroundTint="#BBDEFB"
+        android:padding="16dp"
+        android:layout_marginBottom="16dp" />
 
+    <!-- Job Description EditText -->
     <EditText
         android:id="@+id/jobDescription"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Job Description"/>
+        android:hint="Job Description"
+        android:textColor="#000000"
+        android:backgroundTint="#BBDEFB"
+        android:padding="16dp"
+        android:layout_marginBottom="16dp" />
 
+    <!-- Job Location EditText -->
     <EditText
         android:id="@+id/jobLocation"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="Job Location"/>
+        android:hint="Job Location"
+        android:textColor="#000000"
+        android:backgroundTint="#BBDEFB"
+        android:padding="16dp"
+        android:layout_marginBottom="16dp" />
 
+    <!-- Job Date EditText -->
     <EditText
         android:id="@+id/jobDate"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Date"
-        android:inputType="date"/>
+        android:inputType="date"
+        android:textColor="#000000"
+        android:backgroundTint="#BBDEFB"
+        android:padding="16dp"
+        android:layout_marginBottom="16dp" />
 
+    <!-- Job Category Spinner -->
     <Spinner
         android:id="@+id/job_category"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp" />
 
-
+    <!-- Post Job Button -->
     <Button
         android:id="@+id/postJobButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Post Job"/>
+        android:text="Post Job"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#1976D2"
+        android:padding="16dp" />
 
 </LinearLayout>

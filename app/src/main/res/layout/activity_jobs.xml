@@ -2,59 +2,80 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:background="#F1F8E9"
     android:padding="16dp">
 
+    <!-- Account Button -->
     <Button
         android:id="@+id/accountButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Account"/>
+        android:text="Account"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#1976D2" />
 
+    <!-- Nearest First Button -->
     <Button
         android:id="@+id/btnSortJobs"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Nearest First"
-        android:layout_margin="10dp"/>
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#2196F3"
+        android:layout_margin="10dp" />
+
+    <!-- Show Map Button -->
     <Button
         android:id="@+id/openMapButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Show Map"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#1976D2"
         android:layout_margin="16dp"
-        android:layout_marginLeft="0dp"/>
+        android:layout_marginLeft="0dp" />
 
-
+    <!-- Search Bar -->
     <EditText
         android:id="@+id/search_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Search Jobs"
-        android:inputType="text"/>
+        android:textColor="#000000"
+        android:backgroundTint="#BBDEFB"
+        android:inputType="text" />
 
+    <!-- Filter Spinner -->
     <Spinner
         android:id="@+id/spinnerFilter"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"/>
+        android:layout_marginTop="16dp" />
 
+    <!-- Apply Filters Button -->
     <Button
         android:id="@+id/btnApplyFilters"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Apply Filters"
-        android:layout_marginTop="10dp"/>
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#2196F3"
+        android:layout_marginTop="10dp" />
 
+    <!-- Post a Job Button -->
     <Button
         android:id="@+id/postJobButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Post a Job"
-        android:layout_marginTop="30dp"/>
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#1976D2"
+        android:layout_marginTop="30dp" />
 
+    <!-- RecyclerView for Jobs -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/jobsRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_marginTop="46dp"/>
+        android:layout_marginTop="46dp" />
 </LinearLayout>
