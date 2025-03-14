@@ -6,18 +6,16 @@ public class User {
     private String username;
     private String profileImage;
 
-    // Default constructor required for Firestore
     public User() {
+
     }
 
-    // Constructor to initialize user data
     public User(String userId, String username, String profileImage) {
         this.userId = userId;
         this.username = username;
         this.profileImage = profileImage;
     }
 
-    // Getters and setters for each field
     public String getUserId() {
         return userId;
     }

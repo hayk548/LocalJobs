@@ -5,17 +5,15 @@ public class Job {
     private String title;
     private String description;
     private String location;
-    private String category;  // Add category field
+    private String category;
     private String date;
     private String userId;
     private double latitude;
     private double longitude;
 
     public Job() {
-        // You can initialize the fields with default values if needed.
     }
 
-    // Constructor with all fields
     public Job(String jobId, String title, String description, String location, String date,
                String userId, double latitude, double longitude, String category) {
         this.jobId = jobId;
@@ -29,7 +27,6 @@ public class Job {
         this.category = category;
     }
 
-    // Getters and Setters
     public String getJobId() {
         return jobId;
     }

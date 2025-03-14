@@ -72,7 +72,7 @@ public class WaitingForEmailActivity extends AppCompatActivity {
         user.reload().addOnCompleteListener(task -> {
             if (user.isEmailVerified()) {
                 Toast.makeText(this, "Email Verified!", Toast.LENGTH_SHORT).show();
-                startActivity(new Intent(this, MainActivity.class)); // Go to next activity
+                startActivity(new Intent(this, MainActivity.class));
                 finish();
             } else {
                 Toast.makeText(this, "Email Not Verified. Please check your inbox.", Toast.LENGTH_SHORT).show();

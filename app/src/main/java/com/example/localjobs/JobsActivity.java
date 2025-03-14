@@ -7,7 +7,6 @@ import android.location.Location;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
@@ -21,10 +20,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
-import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +38,7 @@ public class JobsActivity extends AppCompatActivity {
     private boolean sortByNearest = true;
     private static final int LOCATION_PERMISSION_REQUEST = 1;
     private EditText searchBar;
-    private Spinner filterSpinner; // Spinner for filtering by category
+    private Spinner filterSpinner;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +50,7 @@ public class JobsActivity extends AppCompatActivity {
         btnSortJobs = findViewById(R.id.btnSortJobs);
         jobsRecyclerView = findViewById(R.id.jobsRecyclerView);
         searchBar = findViewById(R.id.search_bar);
-        filterSpinner = findViewById(R.id.spinnerFilter); // Initialize the spinner
+        filterSpinner = findViewById(R.id.spinnerFilter);
 
         db = FirebaseFirestore.getInstance();
         jobList = new ArrayList<>();
@@ -83,14 +80,12 @@ public class JobsActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // Add text watcher for search functionality
         searchBar.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence charSequence, int start, int count, int after) {}
 
             @Override
             public void onTextChanged(CharSequence charSequence, int start, int before, int count) {
-                // Trigger the search whenever the text changes
                 loadJobs();
             }
 
@@ -98,20 +93,16 @@ public class JobsActivity extends AppCompatActivity {
             public void afterTextChanged(Editable editable) {}
         });
 
-        // Add spinner item selection listener for filtering by category
         filterSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-                loadJobs(); // Load jobs whenever filter is selected
+                loadJobs();
             }
 
             @Override
-            public void onNothingSelected(AdapterView<?> parentView) {
-                // Do nothing if no filter is selected
-            }
+            public void onNothingSelected(AdapterView<?> parentView) {}
         });
 
-        // Populate the spinner with job categories (you can modify this list as needed)
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.job_categories, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -134,7 +125,7 @@ public class JobsActivity extends AppCompatActivity {
             if (location != null) {
                 userLat = location.getLatitude();
                 userLng = location.getLongitude();
-                loadJobs(); // Load jobs after getting location
+                loadJobs();
             }
         });
     }
@@ -148,20 +139,13 @@ public class JobsActivity extends AppCompatActivity {
                     jobList.add(job);
                 }
 
-                // Get the selected category from the spinner
                 String selectedCategory = filterSpinner.getSelectedItem().toString().toLowerCase().trim();
                 String searchQuery = searchBar.getText().toString().toLowerCase().trim();
 
-                // Log search and filter values to help with debugging
-                Log.d("JobSearch", "Search Query: " + searchQuery);
-                Log.d("JobSearch", "Selected Category: " + selectedCategory);
-
-                // Apply both search and filter conditions
                 List<Job> filteredList = new ArrayList<>();
                 for (Job job : jobList) {
                     boolean matchesSearch = false;
 
-                    // Null checks before calling toLowerCase()
                     if (job.getTitle() != null && job.getTitle().toLowerCase().contains(searchQuery)) {
                         matchesSearch = true;
                     } else if (job.getDescription() != null && job.getDescription().toLowerCase().contains(searchQuery)) {
@@ -170,40 +154,30 @@ public class JobsActivity extends AppCompatActivity {
                         matchesSearch = true;
                     }
 
-                    // Apply the category filter independently of the search
                     boolean matchesCategory = selectedCategory.equals("all") || (job.getCategory() != null && job.getCategory().toLowerCase().contains(selectedCategory));
 
-                    // If job matches either search or category filter, add it to the filtered list
                     if ((matchesSearch || searchQuery.isEmpty()) && matchesCategory) {
                         filteredList.add(job);
                     }
                 }
 
-                // If there is a search query or selected category, use the filtered list; otherwise, keep all jobs
                 if (!searchQuery.isEmpty() || !selectedCategory.equals("all")) {
                     jobList = filteredList;
                 }
 
-                // Sort jobs by distance
                 jobList.sort((job1, job2) -> {
                     double distance1 = calculateDistance(userLat, userLng, job1.getLatitude(), job1.getLongitude());
                     double distance2 = calculateDistance(userLat, userLng, job2.getLatitude(), job2.getLongitude());
                     return sortByNearest ? Double.compare(distance1, distance2) : Double.compare(distance2, distance1);
                 });
 
-                // Update the adapter with the filtered/sorted list
-                jobAdapter.updateJobList(jobList);  // Ensure you have a method like `updateJobList` in your adapter
-            } else {
-                Log.e("JobSearch", "Error loading jobs", task.getException());
+                jobAdapter.updateJobList(jobList);
             }
         });
     }
 
-
-
-
     private double calculateDistance(double userLat, double userLng, double jobLat, double jobLng) {
-        final int R = 6371; // Earth radius in km
+        final int R = 6371;
         double latDistance = Math.toRadians(jobLat - userLat);
         double lonDistance = Math.toRadians(jobLng - userLng);
         double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)

@@ -31,7 +31,7 @@ public class SignUpActivity extends AppCompatActivity {
 
         email = findViewById(R.id.email);
         password = findViewById(R.id.password);
-        confirmPassword = findViewById(R.id.confirmPassword); // Confirm password field
+        confirmPassword = findViewById(R.id.confirmPassword);
         signupButton = findViewById(R.id.signupButton);
 
         db = FirebaseFirestore.getInstance();

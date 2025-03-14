@@ -6,7 +6,6 @@
     android:padding="24dp"
     android:background="#F1F8E9">
 
-    <!-- Email EditText -->
     <EditText
         android:id="@+id/email"
         android:layout_width="match_parent"
@@ -17,7 +16,6 @@
         android:padding="16dp"
         android:layout_marginBottom="16dp" />
 
-    <!-- Password EditText -->
     <EditText
         android:id="@+id/password"
         android:layout_width="match_parent"
@@ -29,7 +27,6 @@
         android:padding="16dp"
         android:layout_marginBottom="16dp" />
 
-    <!-- Confirm Password EditText -->
     <EditText
         android:id="@+id/confirmPassword"
         android:layout_width="match_parent"
@@ -41,7 +38,6 @@
         android:padding="16dp"
         android:layout_marginBottom="16dp" />
 
-    <!-- Sign Up Button -->
     <Button
         android:id="@+id/signupButton"
         android:layout_width="match_parent"

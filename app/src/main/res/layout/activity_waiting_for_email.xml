@@ -5,7 +5,6 @@
     android:padding="24dp"
     android:background="#F1F8E9">
 
-    <!-- Waiting Text -->
     <TextView
         android:id="@+id/tvWaiting"
         android:layout_width="wrap_content"
@@ -16,7 +15,6 @@
         android:layout_centerHorizontal="true"
         android:layout_marginTop="50dp" />
 
-    <!-- ProgressBar -->
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
@@ -26,7 +24,6 @@
         android:layout_marginTop="20dp"
         android:indeterminateTint="#1976D2"/>
 
-    <!-- Timer Text -->
     <TextView
         android:id="@+id/timerTextView"
         android:layout_width="wrap_content"
@@ -38,7 +35,6 @@
         android:layout_below="@id/progressBar"
         android:layout_marginTop="20dp" />
 
-    <!-- Check Verification Button -->
     <Button
         android:id="@+id/checkVerificationButton"
         android:layout_width="wrap_content"
@@ -52,7 +48,6 @@
         android:layout_below="@id/timerTextView"
         android:layout_marginTop="20dp" />
 
-    <!-- Resend Email Button -->
     <Button
         android:id="@+id/resendEmailButton"
         android:layout_width="wrap_content"

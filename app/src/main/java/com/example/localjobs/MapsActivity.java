@@ -41,7 +41,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         double userLat = intent.getDoubleExtra("user_lat", 0.0);
         double userLng = intent.getDoubleExtra("user_lng", 0.0);
 
-
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
         if (mapFragment != null) {
@@ -55,8 +54,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
-        // Get user location before loading job locations
         getUserLocation();
     }
 
@@ -77,7 +74,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     mMap.addMarker(new MarkerOptions().position(userLatLng).title("Your Location"));
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 12));
 
-                    // Load jobs only after getting user location
                     loadJobLocations();
                 }
             }
@@ -90,21 +86,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 List<Job> jobList = new ArrayList<>();
 
                 for (QueryDocumentSnapshot document : task.getResult()) {
-                    Job job = document.toObject(Job.class); // Convert Firestore document to Job object
+                    Job job = document.toObject(Job.class);
                     if (job != null) {
                         LatLng jobLocation = new LatLng(job.getLatitude(), job.getLongitude());
                         mMap.addMarker(new MarkerOptions().position(jobLocation).title(job.getTitle()));
 
-                        // Calculate distance and add to list
                         double distance = calculateDistance(userLat, userLng, job.getLatitude(), job.getLongitude());
                         jobList.add(new Job(job.getJobId(), job.getTitle(), job.getDescription(), job.getLocation(), job.getDate(), job.getUserId(), job.getLatitude(), job.getLongitude(), job.getCategory()));
                     }
                 }
 
-                // Sort jobs by nearest first
                 Collections.sort(jobList, Comparator.comparingDouble(job -> calculateDistance(userLat, userLng, job.getLatitude(), job.getLongitude())));
 
-                // Move camera to nearest job
                 if (!jobList.isEmpty()) {
                     LatLng nearestJob = new LatLng(jobList.get(0).getLatitude(), jobList.get(0).getLongitude());
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(nearestJob, 10));
@@ -114,17 +107,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
     private double calculateDistance(double userLat, double userLng, double jobLat, double jobLng) {
-        final int R = 6371; // Earth radius in km
+        final int R = 6371;
         double latDistance = Math.toRadians(jobLat - userLat);
         double lonDistance = Math.toRadians(jobLng - userLng);
         double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
                 + Math.cos(Math.toRadians(userLat)) * Math.cos(Math.toRadians(jobLat))
                 * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
         double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c; // Distance in km
+        return R * c;
     }
 
-    // Handle permission request result
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);

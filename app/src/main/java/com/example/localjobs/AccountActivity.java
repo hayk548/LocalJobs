@@ -37,7 +37,6 @@ public class AccountActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_account);
 
-        // Initialize Firebase
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
@@ -51,7 +50,6 @@ public class AccountActivity extends AppCompatActivity {
         btnUploadResume = findViewById(R.id.btnUploadResume);
         imageViewProfile = findViewById(R.id.imageViewProfile);
 
-        // Retrieve username from intent if available
         String usernameFromIntent = getIntent().getStringExtra("username");
 
         if (usernameFromIntent != null && !usernameFromIntent.isEmpty()) {
@@ -60,7 +58,6 @@ public class AccountActivity extends AppCompatActivity {
             loadUserData();
         }
 
-        // Update username
         btnSaveUsername.setOnClickListener(v -> {
             String username = editTextUsername.getText().toString().trim();
             if (!TextUtils.isEmpty(username)) {
@@ -70,7 +67,6 @@ public class AccountActivity extends AppCompatActivity {
             }
         });
 
-        // Change password
         btnChangePassword.setOnClickListener(v -> {
             String newPassword = editTextNewPassword.getText().toString().trim();
             if (!TextUtils.isEmpty(newPassword) && newPassword.length() >= 6) {

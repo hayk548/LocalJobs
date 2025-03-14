@@ -7,7 +7,6 @@
     android:padding="24dp"
     android:background="#F1F8E9">
 
-    <!-- Job Title EditText -->
     <EditText
         android:id="@+id/jobTitle"
         android:layout_width="match_parent"
@@ -18,7 +17,6 @@
         android:padding="16dp"
         android:layout_marginBottom="16dp" />
 
-    <!-- Job Description EditText -->
     <EditText
         android:id="@+id/jobDescription"
         android:layout_width="match_parent"
@@ -29,7 +27,6 @@
         android:padding="16dp"
         android:layout_marginBottom="16dp" />
 
-    <!-- Job Location EditText -->
     <EditText
         android:id="@+id/jobLocation"
         android:layout_width="match_parent"
@@ -40,7 +37,6 @@
         android:padding="16dp"
         android:layout_marginBottom="16dp" />
 
-    <!-- Job Date EditText -->
     <EditText
         android:id="@+id/jobDate"
         android:layout_width="match_parent"
@@ -52,14 +48,12 @@
         android:padding="16dp"
         android:layout_marginBottom="16dp" />
 
-    <!-- Job Category Spinner -->
     <Spinner
         android:id="@+id/job_category"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp" />
 
-    <!-- Post Job Button -->
     <Button
         android:id="@+id/postJobButton"
         android:layout_width="match_parent"

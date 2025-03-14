@@ -6,7 +6,6 @@
     android:padding="24dp"
     android:background="#F1F8E9">
 
-    <!-- Email EditText -->
     <EditText
         android:id="@+id/email"
         android:layout_width="match_parent"
@@ -18,7 +17,6 @@
         android:padding="16dp"
         android:layout_marginBottom="16dp"/>
 
-    <!-- Password EditText -->
     <EditText
         android:id="@+id/password"
         android:layout_width="match_parent"
@@ -30,7 +28,6 @@
         android:padding="16dp"
         android:layout_marginBottom="16dp"/>
 
-    <!-- Remember Me Checkbox -->
     <CheckBox
         android:id="@+id/rememberMeCheckbox"
         android:layout_width="wrap_content"
@@ -39,7 +36,6 @@
         android:textColor="#1976D2"
         android:layout_marginBottom="24dp"/>
 
-    <!-- Login Button -->
     <Button
         android:id="@+id/loginButton"
         android:layout_width="match_parent"
@@ -50,7 +46,6 @@
         android:padding="16dp"
         android:layout_marginBottom="16dp"/>
 
-    <!-- Sign Up Button -->
     <Button
         android:id="@+id/signupButton"
         android:layout_width="match_parent"

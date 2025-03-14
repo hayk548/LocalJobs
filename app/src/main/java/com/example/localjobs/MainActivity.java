@@ -90,12 +90,10 @@ public class MainActivity extends AppCompatActivity {
                             db.collection("users").document(userId).get()
                                     .addOnSuccessListener(documentSnapshot -> {
                                         if (documentSnapshot.exists()) {
-                                            // User exists, proceed to JobsActivity
                                             Intent intent = new Intent(MainActivity.this, JobsActivity.class);
                                             startActivity(intent);
                                             finish();
                                         } else {
-                                            // User does not exist, create user document
                                             createUserDocument(userId, userEmail);
                                             Intent intent = new Intent(MainActivity.this, JobsActivity.class);
                                             startActivity(intent);
@@ -145,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
     private void createUserDocument(String userId, String email) {
-        User newUser = new User(userId, email, ""); // You can add a username or other fields if needed
+        User newUser = new User(userId, email, "");
         Log.d("MainActivity", "Creating user document for " + userId);
 
         db.collection("users").document(userId)

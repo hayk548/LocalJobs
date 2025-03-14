@@ -34,7 +34,7 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
     }
     public void updateJobList(List<Job> updatedJobList) {
         this.jobList = updatedJobList;
-        notifyDataSetChanged();  // Notify the adapter that the data has changed
+        notifyDataSetChanged();
     }
 
     @Override
@@ -53,7 +53,6 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
             holder.jobDescription.setText(job.getDescription());
         }
 
-        // Show edit & delete buttons only for the job creator
         if (job.getUserId() != null && job.getUserId().equals(currentUserId)) {
             holder.editButton.setVisibility(View.VISIBLE);
             holder.deleteButton.setVisibility(View.VISIBLE);
@@ -62,27 +61,18 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
             holder.deleteButton.setVisibility(View.GONE);
         }
 
-
-        // Set up Apply button
         holder.applyButton.setOnClickListener(v -> {
-            // Handle job application (can navigate to a new activity or submit data)
         });
 
-        // Set up Edit button
         holder.editButton.setOnClickListener(v -> {
-            // Edit functionality (Open Edit Job Activity or directly edit)
-            // Example: Open an Edit Job Activity
             Intent editIntent = new Intent(context, EditJobActivity.class);
             editIntent.putExtra("jobId", job.getJobId());
             context.startActivity(editIntent);
         });
 
-        // Set up Delete button
         holder.deleteButton.setOnClickListener(v -> {
-            // Delete job from Firestore
             db.collection("jobs").document(job.getJobId()).delete()
                     .addOnSuccessListener(aVoid -> {
-                        // Remove from the list and notify adapter
                         jobList.remove(position);
                         notifyItemRemoved(position);
                         Toast.makeText(context, "Job deleted successfully", Toast.LENGTH_SHORT).show();
