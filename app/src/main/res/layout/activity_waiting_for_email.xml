@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:padding="24dp"
-    android:background="#F1F8E9">
+    android:background="#9ecbff">
 
     <TextView
         android:id="@+id/tvWaiting"
@@ -30,7 +30,7 @@
         android:layout_height="wrap_content"
         android:text="Resend available in 60s"
         android:textSize="16sp"
-        android:textColor="#4CAF50"
+        android:textColor="#1976D2"
         android:layout_centerHorizontal="true"
         android:layout_below="@id/progressBar"
         android:layout_marginTop="20dp" />

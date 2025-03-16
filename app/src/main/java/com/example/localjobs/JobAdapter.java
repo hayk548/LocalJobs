@@ -6,6 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.recyclerview.widget.RecyclerView;
@@ -40,18 +41,16 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
     @Override
     public void onBindViewHolder(JobViewHolder holder, int position) {
         Job job = jobList.get(position);
+
+        holder.jobTitle.setText(job.getTitle());
+        holder.jobCategory.setText(job.getCategory());
+        holder.jobDescription.setText(job.getDescription());
+
+        int categoryImageResId = getCategoryImage(job.getCategory());
+        holder.jobCategoryImage.setImageResource(categoryImageResId);
+
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         String currentUserId = (currentUser != null) ? currentUser.getUid() : "";
-
-        if (job.getTitle() != null) {
-            holder.jobTitle.setText(job.getTitle());
-        }
-        if (job.getCategory() != null) {
-            holder.jobCategory.setText(job.getCategory());
-        }
-        if (job.getDescription() != null) {
-            holder.jobDescription.setText(job.getDescription());
-        }
 
         if (job.getUserId() != null && job.getUserId().equals(currentUserId)) {
             holder.editButton.setVisibility(View.VISIBLE);
@@ -61,14 +60,13 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
             holder.deleteButton.setVisibility(View.GONE);
         }
 
-        holder.applyButton.setOnClickListener(v -> {
-        });
 
         holder.editButton.setOnClickListener(v -> {
             Intent editIntent = new Intent(context, EditJobActivity.class);
             editIntent.putExtra("jobId", job.getJobId());
             context.startActivity(editIntent);
         });
+
 
         holder.deleteButton.setOnClickListener(v -> {
             db.collection("jobs").document(job.getJobId()).delete()
@@ -81,14 +79,91 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
         });
     }
 
+
     @Override
     public int getItemCount() {
         return jobList.size();
     }
 
-    public static class JobViewHolder extends RecyclerView.ViewHolder {
 
+    private int getCategoryImage(String category) {
+
+        if (category == null) {
+            return R.drawable.default_image;
+        }
+
+        category = category.toLowerCase().trim();
+
+        switch (category.toLowerCase()) {
+            case "software development":
+                return R.drawable.software_development;
+            case "marketing":
+                return R.drawable.marketing;
+            case "design":
+                return R.drawable.design;
+            case "customer support":
+                return R.drawable.customer_support;
+            case "sales":
+                return R.drawable.sales;
+            case "data science":
+                return R.drawable.data_science;
+            case "finance":
+                return R.drawable.finance;
+            case "healthcare":
+                return R.drawable.healthcare;
+            case "education":
+                return R.drawable.education;
+            case "human resources":
+                return R.drawable.human_resources;
+            case "legal":
+                return R.drawable.legal;
+            case "engineering":
+                return R.drawable.engineering;
+            case "it, networking":
+                return R.drawable.it_networking;
+            case "project management":
+                return R.drawable.project_management;
+            case "consulting":
+                return R.drawable.consulting;
+            case "real estate":
+                return R.drawable.real_estate;
+            case "manufacturing":
+                return R.drawable.manufacturing;
+            case "administrative":
+                return R.drawable.administrative;
+            case "operations":
+                return R.drawable.operations;
+            case "transportation":
+                return R.drawable.transportation;
+            case "retail":
+                return R.drawable.retail;
+            case "hospitality":
+                return R.drawable.hospitality;
+            case "construction":
+                return R.drawable.construction;
+            case "security":
+                return R.drawable.security;
+            case "government":
+                return R.drawable.government;
+            case "freelancing":
+                return R.drawable.freelancing;
+            case "media, communications":
+                return R.drawable.media_communications;
+            case "event management":
+                return R.drawable.event_management;
+            case "science, research":
+                return R.drawable.science_research;
+            case "social services":
+                return R.drawable.social_services;
+            default:
+                return R.drawable.default_image;
+        }
+    }
+
+
+    public static class JobViewHolder extends RecyclerView.ViewHolder {
         TextView jobTitle, jobCategory, jobDescription;
+        ImageView jobCategoryImage;
         Button applyButton, editButton, deleteButton;
 
         public JobViewHolder(View itemView) {
@@ -96,6 +171,7 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
             jobTitle = itemView.findViewById(R.id.jobTitle);
             jobCategory = itemView.findViewById(R.id.jobCategory);
             jobDescription = itemView.findViewById(R.id.jobDescription);
+            jobCategoryImage = itemView.findViewById(R.id.jobCategoryImage);
             applyButton = itemView.findViewById(R.id.applyButton);
             editButton = itemView.findViewById(R.id.editButton);
             deleteButton = itemView.findViewById(R.id.deleteButton);

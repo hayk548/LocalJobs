@@ -1,5 +1,6 @@
 [versions]
 agp = "8.8.1"
+androidImageCropper = "4.5.0"
 converterGson = "2.9.0"
 firebaseAppcheck = "16.0.0"
 firebaseAuth = "21.1.0"
@@ -22,7 +23,7 @@ recyclerview = "1.2.1"
 retrofit = "2.9.0"
 
 [libraries]
-firebase-appcheck = { module = "com.google.firebase:firebase-appcheck", version.ref = "firebaseAppcheck" }
+android-image-cropper = { module = "com.canhub.cropper:android-image-cropper", version.ref = "androidImageCropper" }
 firebase-auth = { module = "com.google.firebase:firebase-auth", version.ref = "firebaseAuth" }
 firebase-database = { module = "com.google.firebase:firebase-database", version.ref = "firebaseDatabase" }
 firebase-firestore = { module = "com.google.firebase:firebase-firestore", version.ref = "firebaseFirestore" }

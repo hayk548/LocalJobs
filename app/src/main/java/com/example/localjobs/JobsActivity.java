@@ -139,7 +139,7 @@ public class JobsActivity extends AppCompatActivity {
                     jobList.add(job);
                 }
 
-                String selectedCategory = filterSpinner.getSelectedItem().toString().toLowerCase().trim();
+                String selectedCategory = filterSpinner.getSelectedItem().toString().trim();
                 String searchQuery = searchBar.getText().toString().toLowerCase().trim();
 
                 List<Job> filteredList = new ArrayList<>();
@@ -154,14 +154,15 @@ public class JobsActivity extends AppCompatActivity {
                         matchesSearch = true;
                     }
 
-                    boolean matchesCategory = selectedCategory.equals("all") || (job.getCategory() != null && job.getCategory().toLowerCase().contains(selectedCategory));
+                    boolean matchesCategory = selectedCategory.equals("All") ||
+                            (job.getCategory() != null && job.getCategory().equalsIgnoreCase(selectedCategory));
 
                     if ((matchesSearch || searchQuery.isEmpty()) && matchesCategory) {
                         filteredList.add(job);
                     }
                 }
 
-                if (!searchQuery.isEmpty() || !selectedCategory.equals("all")) {
+                if (!searchQuery.isEmpty() || !selectedCategory.equals("All")) {
                     jobList = filteredList;
                 }
 

@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="24dp"
-    android:background="#F1F8E9">
+    android:background="#9ecbff">
 
     <EditText
         android:id="@+id/email"

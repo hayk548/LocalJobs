@@ -2,6 +2,7 @@
     <string name="app_name">LocalJobs</string>
 
     <string-array name="job_categories">
+        <item>All</item>
         <item>Software Development</item>
         <item>Marketing</item>
         <item>Design</item>
