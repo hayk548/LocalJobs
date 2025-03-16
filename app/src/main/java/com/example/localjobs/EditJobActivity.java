@@ -1,6 +1,8 @@
 package com.example.localjobs;
 
+import android.os.Build;
 import android.os.Bundle;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Toast;
@@ -20,6 +22,11 @@ public class EditJobActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_edit_job);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Window window = getWindow();
+            window.setStatusBarColor(getResources().getColor(R.color.light_blue)); // Set status bar color
+        }
 
         db = FirebaseFirestore.getInstance();
         titleEditText = findViewById(R.id.titleEditText);

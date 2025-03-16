@@ -9,11 +9,13 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+
 import java.util.List;
 
 public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
@@ -33,6 +35,7 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
         View view = LayoutInflater.from(context).inflate(R.layout.item_job, parent, false);
         return new JobViewHolder(view);
     }
+
     public void updateJobList(List<Job> updatedJobList) {
         this.jobList = updatedJobList;
         notifyDataSetChanged();
@@ -42,42 +45,56 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
     public void onBindViewHolder(JobViewHolder holder, int position) {
         Job job = jobList.get(position);
 
-        holder.jobTitle.setText(job.getTitle());
-        holder.jobCategory.setText(job.getCategory());
-        holder.jobDescription.setText(job.getDescription());
-
-        int categoryImageResId = getCategoryImage(job.getCategory());
-        holder.jobCategoryImage.setImageResource(categoryImageResId);
-
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         String currentUserId = (currentUser != null) ? currentUser.getUid() : "";
 
-        if (job.getUserId() != null && job.getUserId().equals(currentUserId)) {
-            holder.editButton.setVisibility(View.VISIBLE);
-            holder.deleteButton.setVisibility(View.VISIBLE);
-        } else {
-            holder.editButton.setVisibility(View.GONE);
-            holder.deleteButton.setVisibility(View.GONE);
-        }
+        // Check if the user has already applied for this job
+        db.collection("applications")
+                .whereEqualTo("jobId", job.getJobId())
+                .whereEqualTo("userId", currentUserId)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult().isEmpty()) {
+                        // If the user has NOT applied, bind the job data
+                        holder.jobTitle.setText(job.getTitle());
+                        holder.jobCategory.setText(job.getCategory());
+                        holder.jobDescription.setText(job.getDescription());
 
+                        int categoryImageResId = getCategoryImage(job.getCategory());
+                        holder.jobCategoryImage.setImageResource(categoryImageResId);
 
-        holder.editButton.setOnClickListener(v -> {
-            Intent editIntent = new Intent(context, EditJobActivity.class);
-            editIntent.putExtra("jobId", job.getJobId());
-            context.startActivity(editIntent);
-        });
+                        // Set visibility of edit and delete buttons
+                        if (job.getUserId() != null && job.getUserId().equals(currentUserId)) {
+                            holder.editButton.setVisibility(View.VISIBLE);
+                            holder.deleteButton.setVisibility(View.VISIBLE);
+                        } else {
+                            holder.editButton.setVisibility(View.GONE);
+                            holder.deleteButton.setVisibility(View.GONE);
+                        }
 
-
-        holder.deleteButton.setOnClickListener(v -> {
-            db.collection("jobs").document(job.getJobId()).delete()
-                    .addOnSuccessListener(aVoid -> {
+                        // Set Apply button visibility
+                        holder.applyButton.setVisibility(View.VISIBLE);
+                        holder.applyButton.setOnClickListener(v -> {
+                            Application jobApplication = new Application(job.getJobId(), currentUserId, System.currentTimeMillis(), "Pending");
+                            db.collection("applications").add(jobApplication)
+                                    .addOnSuccessListener(documentReference -> {
+                                        Toast.makeText(context, "Successfully applied for the job!", Toast.LENGTH_SHORT).show();
+                                        // After applying, remove the job from RecyclerView
+                                        jobList.remove(position);  // Remove the applied job from the list
+                                        notifyItemRemoved(position);  // Notify RecyclerView to update the list
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(context, "Failed to apply. Try again.", Toast.LENGTH_SHORT).show();
+                                    });
+                        });
+                    } else {
+                        // If the user has already applied, remove the job from the list
                         jobList.remove(position);
-                        notifyItemRemoved(position);
-                        Toast.makeText(context, "Job deleted successfully", Toast.LENGTH_SHORT).show();
-                    })
-                    .addOnFailureListener(e -> Toast.makeText(context, "Error deleting job", Toast.LENGTH_SHORT).show());
-        });
+                        notifyItemRemoved(position);  // Remove the job from RecyclerView
+                    }
+                });
     }
+
 
 
     @Override
@@ -85,16 +102,14 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
         return jobList.size();
     }
 
-
     private int getCategoryImage(String category) {
-
         if (category == null) {
             return R.drawable.default_image;
         }
 
         category = category.toLowerCase().trim();
 
-        switch (category.toLowerCase()) {
+        switch (category) {
             case "software development":
                 return R.drawable.software_development;
             case "marketing":
@@ -159,7 +174,6 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
                 return R.drawable.default_image;
         }
     }
-
 
     public static class JobViewHolder extends RecyclerView.ViewHolder {
         TextView jobTitle, jobCategory, jobDescription;

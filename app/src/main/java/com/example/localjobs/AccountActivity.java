@@ -2,9 +2,11 @@ package com.example.localjobs;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.text.TextUtils;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -12,11 +14,14 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
 import com.google.firebase.storage.FirebaseStorage;
 import com.google.firebase.storage.StorageReference;
 import com.squareup.picasso.Picasso;
@@ -25,6 +30,8 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AccountActivity extends AppCompatActivity {
 
@@ -36,18 +43,29 @@ public class AccountActivity extends AppCompatActivity {
     private Uri profileImageUri;
 
     private EditText editTextUsername, editTextNewPassword;
-    private Button btnSaveUsername, btnChangePassword, btnUploadImage;
+    private Button btnSaveUsername, btnChangePassword, btnUploadImage, btnLogout;
     private ImageView imageViewProfile;
+
+    private JobAdapter appliedJobAdapter;
+    private List<Job> appliedJobsList = new ArrayList<>();  // Initialize with empty list
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_account);
 
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Window window = getWindow();
+            window.setStatusBarColor(getResources().getColor(R.color.light_blue)); // Set status bar color
+        }
+
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
         storage = FirebaseStorage.getInstance();
         currentUser = mAuth.getCurrentUser();
+
+        // Initialize RecyclerView and Adapter
+        appliedJobAdapter = new JobAdapter(appliedJobsList, this);
 
         editTextUsername = findViewById(R.id.editTextUsername);
         editTextNewPassword = findViewById(R.id.editTextNewPassword);
@@ -55,9 +73,13 @@ public class AccountActivity extends AppCompatActivity {
         btnChangePassword = findViewById(R.id.btnChangePassword);
         btnUploadImage = findViewById(R.id.btnUploadImage);
         imageViewProfile = findViewById(R.id.imageViewProfile);
+        btnLogout = findViewById(R.id.btnLogout);
 
-        // Load user data from Firestore
         loadUserData();
+
+        if (currentUser != null) {
+            loadAppliedJobs();
+        }
 
         btnSaveUsername.setOnClickListener(v -> {
             String username = editTextUsername.getText().toString().trim();
@@ -77,7 +99,60 @@ public class AccountActivity extends AppCompatActivity {
             }
         });
 
+        btnLogout.setOnClickListener(v -> {
+            FirebaseAuth.getInstance().signOut();
+            Intent intent = new Intent(AccountActivity.this, MainActivity.class);
+            startActivity(intent);
+            finish();
+        });
+
         btnUploadImage.setOnClickListener(v -> openFileChooser());
+    }
+
+    private void loadAppliedJobs() {
+        String currentUserId = currentUser.getUid();
+
+        // Query the Firestore 'applications' collection for the jobs applied by the current user
+        db.collection("applications")
+                .whereEqualTo("userId", currentUserId)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        List<String> appliedJobIds = new ArrayList<>();
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            String jobId = document.getString("jobId");
+                            appliedJobIds.add(jobId);
+                        }
+                        fetchJobDetails(appliedJobIds);
+                    } else {
+                        Toast.makeText(AccountActivity.this, "Error loading applied jobs", Toast.LENGTH_SHORT).show();
+                    }
+                });
+    }
+
+    private void fetchJobDetails(List<String> appliedJobIds) {
+        if (appliedJobIds.isEmpty()) {
+            return;
+        }
+        db.collection("jobs")
+                .whereIn("jobId", appliedJobIds)
+                .get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        List<Job> jobList = new ArrayList<>();
+                        for (QueryDocumentSnapshot document : task.getResult()) {
+                            Job job = document.toObject(Job.class);
+                            jobList.add(job);
+                        }
+
+                        // Clear the old list and add new data
+                        appliedJobsList.clear();
+                        appliedJobsList.addAll(jobList);
+                        appliedJobAdapter.notifyDataSetChanged();  // Notify the adapter to update RecyclerView
+                    } else {
+                        Toast.makeText(AccountActivity.this, "Error fetching job details", Toast.LENGTH_SHORT).show();
+                    }
+                });
     }
 
     private void openFileChooser() {
