@@ -13,6 +13,7 @@ import android.view.Window;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.Spinner;
 import android.widget.ArrayAdapter;
 import androidx.annotation.NonNull;
@@ -34,7 +35,8 @@ public class JobsActivity extends AppCompatActivity {
     private JobAdapter jobAdapter;
     private List<Job> jobList;
     private FirebaseFirestore db;
-    private Button postJobButton, accountButton, btnSortJobs, openMapButton;
+//    private Button btnSortJobs;
+    private ImageButton postJobButton, accountButton, openMapButton;
     private FusedLocationProviderClient fusedLocationClient;
     private double userLat = 0.0, userLng = 0.0;
     private boolean sortByNearest = true;
@@ -54,7 +56,7 @@ public class JobsActivity extends AppCompatActivity {
 
         postJobButton = findViewById(R.id.postJobButton);
         accountButton = findViewById(R.id.accountButton);
-        btnSortJobs = findViewById(R.id.btnSortJobs);
+//        btnSortJobs = findViewById(R.id.btnSortJobs);
         jobsRecyclerView = findViewById(R.id.jobsRecyclerView);
         searchBar = findViewById(R.id.search_bar);
         filterSpinner = findViewById(R.id.spinnerFilter);
@@ -72,11 +74,11 @@ public class JobsActivity extends AppCompatActivity {
         postJobButton.setOnClickListener(v -> startActivity(new Intent(JobsActivity.this, PostJobActivity.class)));
         accountButton.setOnClickListener(v -> startActivity(new Intent(JobsActivity.this, AccountActivity.class)));
 
-        btnSortJobs.setOnClickListener(v -> {
-            sortByNearest = !sortByNearest;
-            btnSortJobs.setText(sortByNearest ? "Nearest First" : "Farthest First");
-            loadJobs();
-        });
+//        btnSortJobs.setOnClickListener(v -> {
+//            sortByNearest = !sortByNearest;
+//            btnSortJobs.setText(sortByNearest ? "Nearest First" : "Farthest First");
+//            loadJobs();
+//        });
 
         openMapButton = findViewById(R.id.openMapButton);
 

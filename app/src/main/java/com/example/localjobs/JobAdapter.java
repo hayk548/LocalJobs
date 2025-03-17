@@ -72,6 +72,25 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
                             holder.deleteButton.setVisibility(View.GONE);
                         }
 
+                        holder.editButton.setOnClickListener(v -> {
+                            Intent intent = new Intent(context, EditJobActivity.class);
+                            intent.putExtra("jobId", job.getJobId()); // Pass the job ID to the edit activity
+                            context.startActivity(intent);
+                        });
+
+                        holder.deleteButton.setOnClickListener(v -> {
+                            db.collection("jobs").document(job.getJobId())
+                                    .delete()
+                                    .addOnSuccessListener(aVoid -> {
+                                        Toast.makeText(context, "Job deleted successfully!", Toast.LENGTH_SHORT).show();
+                                        jobList.remove(position);  // Remove from list
+                                        notifyItemRemoved(position); // Notify RecyclerView
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Toast.makeText(context, "Failed to delete job. Try again.", Toast.LENGTH_SHORT).show();
+                                    });
+                        });
+
                         // Set Apply button visibility
                         holder.applyButton.setVisibility(View.VISIBLE);
                         holder.applyButton.setOnClickListener(v -> {
@@ -79,9 +98,18 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
                             db.collection("applications").add(jobApplication)
                                     .addOnSuccessListener(documentReference -> {
                                         Toast.makeText(context, "Successfully applied for the job!", Toast.LENGTH_SHORT).show();
-                                        // After applying, remove the job from RecyclerView
                                         jobList.remove(position);  // Remove the applied job from the list
-                                        notifyItemRemoved(position);  // Notify RecyclerView to update the list
+                                        notifyItemRemoved(position);
+                                        db.collection("jobs").document(job.getJobId())
+                                                .delete()
+                                                .addOnSuccessListener(aVoid -> {
+                                                    Toast.makeText(context, "Job deleted successfully!", Toast.LENGTH_SHORT).show();
+                                                    jobList.remove(position);  // Remove from list
+                                                    notifyItemRemoved(position); // Notify RecyclerView
+                                                })
+                                                .addOnFailureListener(e -> {
+                                                    Toast.makeText(context, "Failed to delete job. Try again.", Toast.LENGTH_SHORT).show();
+                                                });
                                     })
                                     .addOnFailureListener(e -> {
                                         Toast.makeText(context, "Failed to apply. Try again.", Toast.LENGTH_SHORT).show();
