@@ -61,12 +61,12 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent">
         <ImageButton
-            android:id="@+id/settingsButton"
+            android:id="@+id/chatsButton"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="Settings"
-            android:src="@drawable/ic_settings"
+            android:contentDescription="Chats"
+            android:src="@drawable/ic_chat"
             android:padding="8dp"
             android:layout_marginStart="16dp" />
 

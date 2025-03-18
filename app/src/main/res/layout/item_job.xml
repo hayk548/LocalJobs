@@ -54,6 +54,18 @@
         android:layout_gravity="center"/>
 
     <Button
+        android:id="@+id/chatButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Chat"
+        android:textColor="#FFFFFF"
+        android:backgroundTint="#52ceff"
+        android:padding="12dp"
+        android:layout_marginBottom="10dp"
+        android:layout_gravity="center"/>
+
+
+    <Button
         android:id="@+id/editButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

@@ -72,6 +72,16 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
                             holder.deleteButton.setVisibility(View.GONE);
                         }
 
+                        holder.chatButton.setOnClickListener(v -> {
+                            String jobPosterId = job.getUserId(); // Get job creator's ID
+
+                            if (!currentUserId.equals(jobPosterId)) { // Prevent chatting with yourself
+                                Intent intent = new Intent(context, ChatActivity.class);
+                                intent.putExtra("receiverId", jobPosterId);
+                                context.startActivity(intent);
+                            }
+                        });
+
                         holder.editButton.setOnClickListener(v -> {
                             Intent intent = new Intent(context, EditJobActivity.class);
                             intent.putExtra("jobId", job.getJobId()); // Pass the job ID to the edit activity
@@ -206,7 +216,7 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
     public static class JobViewHolder extends RecyclerView.ViewHolder {
         TextView jobTitle, jobCategory, jobDescription;
         ImageView jobCategoryImage;
-        Button applyButton, editButton, deleteButton;
+        Button applyButton, chatButton, editButton, deleteButton;
 
         public JobViewHolder(View itemView) {
             super(itemView);
@@ -215,6 +225,7 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
             jobDescription = itemView.findViewById(R.id.jobDescription);
             jobCategoryImage = itemView.findViewById(R.id.jobCategoryImage);
             applyButton = itemView.findViewById(R.id.applyButton);
+            chatButton = itemView.findViewById(R.id.chatButton);
             editButton = itemView.findViewById(R.id.editButton);
             deleteButton = itemView.findViewById(R.id.deleteButton);
         }

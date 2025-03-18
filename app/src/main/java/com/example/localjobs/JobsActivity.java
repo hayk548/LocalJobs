@@ -35,8 +35,7 @@ public class JobsActivity extends AppCompatActivity {
     private JobAdapter jobAdapter;
     private List<Job> jobList;
     private FirebaseFirestore db;
-//    private Button btnSortJobs;
-    private ImageButton postJobButton, accountButton, openMapButton;
+    private ImageButton postJobButton, accountButton, openMapButton, chatsButton;
     private FusedLocationProviderClient fusedLocationClient;
     private double userLat = 0.0, userLng = 0.0;
     private boolean sortByNearest = true;
@@ -56,7 +55,7 @@ public class JobsActivity extends AppCompatActivity {
 
         postJobButton = findViewById(R.id.postJobButton);
         accountButton = findViewById(R.id.accountButton);
-//        btnSortJobs = findViewById(R.id.btnSortJobs);
+        chatsButton = findViewById(R.id.chatsButton);
         jobsRecyclerView = findViewById(R.id.jobsRecyclerView);
         searchBar = findViewById(R.id.search_bar);
         filterSpinner = findViewById(R.id.spinnerFilter);
@@ -86,6 +85,11 @@ public class JobsActivity extends AppCompatActivity {
             Intent intent = new Intent(JobsActivity.this, MapsActivity.class);
             intent.putExtra("user_lat", userLat);
             intent.putExtra("user_lng", userLng);
+            startActivity(intent);
+        });
+
+        chatsButton.setOnClickListener(v -> {
+            Intent intent = new Intent(JobsActivity.this, ChatsActivity.class);
             startActivity(intent);
         });
 
