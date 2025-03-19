@@ -2,22 +2,18 @@ package com.example.localjobs;
 
 public class ChatUser {
     private String userId;
-    private String username;
+    private String lastMessage;
 
-    public ChatUser() {
-        // Empty constructor for Firebase
-    }
-
-    public ChatUser(String userId, String username) {
+    public ChatUser(String userId, String lastMessage) {
         this.userId = userId;
-        this.username = username;
+        this.lastMessage = lastMessage;
     }
 
     public String getUserId() {
         return userId;
     }
 
-    public String getUsername() {
-        return username;
+    public String getLastMessage() {
+        return lastMessage;
     }
 }
