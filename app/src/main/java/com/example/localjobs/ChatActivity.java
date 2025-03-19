@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -51,54 +52,50 @@ public class ChatActivity extends AppCompatActivity {
 
     private void sendMessage() {
         String messageText = editMessage.getText().toString().trim();
-        if (!messageText.isEmpty()) {
-            // Create the message object without the messageId
-            ChatMessage chatMessage = new ChatMessage(senderId, receiverId, messageText, new Date().getTime());
+        if (messageText.isEmpty()) return;
 
-            // Add message to Firestore
-            db.collection("messages").add(chatMessage)
-                    .addOnSuccessListener(documentReference -> {
-                        // Log the message document ID
-                        Log.d("ChatActivity", "Message sent with ID: " + documentReference.getId());
-                        editMessage.setText("");  // Clear the input field after sending
-                        loadMessages();           // Load the updated list of messages
-                    })
-                    .addOnFailureListener(e -> {
-                        // Handle errors if the message fails to send
-                        Log.e("ChatActivity", "Error sending message", e);
-                    });
-        } else {
-            Log.d("ChatActivity", "Message text is empty, not sending");
-        }
+        // Create message object
+        ChatMessage chatMessage = new ChatMessage(senderId, receiverId, messageText, new Date().getTime());
+
+        // Save message to Firestore
+        db.collection("messages").add(chatMessage)
+                .addOnSuccessListener(documentReference -> {
+                    editMessage.setText("");  // Clear input field
+                    loadMessages();
+                    // Update the 'chats' collection for both sender & receiver
+                    updateChatMetadata(senderId, receiverId, messageText);
+                    updateChatMetadata(receiverId, senderId, messageText);
+                })
+                .addOnFailureListener(e -> Log.e("ChatActivity", "Error sending message", e));
     }
+
+    // Function to update 'chats' collection
+    private void updateChatMetadata(String userId, String chatPartnerId, String lastMessage) {
+        db.collection("chats")
+                .document(userId + "_" + chatPartnerId)
+                .set(new ChatMetadata(userId + "_" + chatPartnerId, userId, chatPartnerId, lastMessage, new Date().getTime()));
+    }
+
     private void loadMessages() {
         db.collection("messages")
-                .whereIn("senderId", new ArrayList<String>() {{
-                    add(senderId);
-                    add(receiverId);
-                }})
-                .whereIn("receiverId", new ArrayList<String>() {{
-                    add(receiverId);
-                    add(senderId);
-                }})
-                .orderBy("timestamp", Query.Direction.ASCENDING)  // Ordering messages by time
+                .whereIn("senderId", Arrays.asList(senderId, receiverId))
+                .whereIn("receiverId", Arrays.asList(senderId, receiverId))
+                .orderBy("timestamp", Query.Direction.ASCENDING)
                 .addSnapshotListener((queryDocumentSnapshots, e) -> {
                     if (e != null) {
-                        // Log or handle Firestore query error
                         Log.e("ChatActivity", "Error loading messages", e);
                         return;
                     }
-                    if (queryDocumentSnapshots != null) {
-                        chatMessages.clear();  // Clear the list of messages before adding new ones
-                        for (DocumentSnapshot snapshot : queryDocumentSnapshots) {
-                            ChatMessage chatMessage = snapshot.toObject(ChatMessage.class);
-                            if (chatMessage != null) {
-                                chatMessages.add(chatMessage);  // Add new messages to the list
-                            }
+                    chatMessages.clear();
+                    for (DocumentSnapshot snapshot : queryDocumentSnapshots) {
+                        ChatMessage chatMessage = snapshot.toObject(ChatMessage.class);
+                        if (chatMessage != null) {
+                            chatMessages.add(chatMessage);
                         }
-                        chatAdapter.notifyDataSetChanged();  // Notify adapter of new data
-                        recyclerChat.smoothScrollToPosition(chatMessages.size() - 1);  // Scroll to the latest message
                     }
+                    chatAdapter.notifyDataSetChanged();
+                    recyclerChat.smoothScrollToPosition(chatMessages.size() - 1);
                 });
     }
+
 }

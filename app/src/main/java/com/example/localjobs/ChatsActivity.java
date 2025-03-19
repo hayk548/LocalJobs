@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.ArrayList;
 import java.util.List;
@@ -40,27 +41,24 @@ public class ChatsActivity extends AppCompatActivity {
     private void loadChats() {
         String currentUserId = auth.getCurrentUser().getUid();
 
-        // Query for chat metadata to fetch recent chats with current user
         db.collection("chats")
                 .whereEqualTo("senderId", currentUserId)
-                .get()
-                .addOnSuccessListener(querySnapshot -> {
+                .addSnapshotListener((querySnapshot, e) -> {
+                    if (e != null) {
+                        Log.e("ChatsActivity", "Error loading chats", e);
+                        return;
+                    }
                     chatUsers.clear();
-                    for (var doc : querySnapshot.getDocuments()) {
+                    for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         ChatMetadata chatMetadata = doc.toObject(ChatMetadata.class);
                         if (chatMetadata != null) {
-                            // Here you can use the receiverId and lastMessage to create a ChatUser instance
-                            ChatUser chatUser = new ChatUser(chatMetadata.getReceiverId(), chatMetadata.getLastMessage());
-                            chatUsers.add(chatUser);
+                            chatUsers.add(new ChatUser(chatMetadata.getReceiverId(), chatMetadata.getLastMessage()));
                         }
                     }
                     chatListAdapter.notifyDataSetChanged();
-                })
-                .addOnFailureListener(e -> {
-                    // Handle the error if the query fails
-                    Log.e("ChatsActivity", "Error loading chats", e);
                 });
     }
+
 
 
 }

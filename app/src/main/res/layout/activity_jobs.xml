@@ -78,7 +78,7 @@
             android:contentDescription="Post a Job"
             android:src="@drawable/ic_post"
             android:padding="8dp"
-            android:layout_marginStart="92dp" />
+            android:layout_marginStart="70dp" />
 
         <ImageButton
             android:id="@+id/openMapButton"
@@ -88,7 +88,10 @@
             android:contentDescription="Show Map"
             android:src="@drawable/ic_map"
             android:padding="8dp"
-            android:layout_marginStart="92dp" />
+            android:layout_marginStart="70dp"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"/>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
