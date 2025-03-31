@@ -73,12 +73,14 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
                         }
 
                         holder.chatButton.setOnClickListener(v -> {
-                            String jobPosterId = job.getUserId(); // Get job creator's ID
+                            String jobPosterId = job.getUserId(); // Job creator's UID
 
                             if (!currentUserId.equals(jobPosterId)) { // Prevent chatting with yourself
                                 Intent intent = new Intent(context, ChatActivity.class);
-                                intent.putExtra("receiverId", jobPosterId);
+                                intent.putExtra("receiverId", jobPosterId); // Pass UID instead of email
                                 context.startActivity(intent);
+                            } else {
+                                Toast.makeText(context, "You cannot chat with yourself", Toast.LENGTH_SHORT).show();
                             }
                         });
 

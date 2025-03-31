@@ -8,6 +8,7 @@ public class Job {
     private String category;
     private String date;
     private String userId;
+    private String userEmail;
     private double latitude;
     private double longitude;
 
@@ -82,6 +83,8 @@ public class Job {
     public void setUserId(String userId) {
         this.userId = userId;
     }
+
+    public String getUserEmail() { return userEmail; }
 
     public double getLatitude() {
         return latitude;

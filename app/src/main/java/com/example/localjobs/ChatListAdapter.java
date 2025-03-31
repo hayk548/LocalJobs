@@ -1,44 +1,43 @@
 package com.example.localjobs;
 
 import android.content.Context;
-import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import com.google.firebase.auth.FirebaseAuth;
-import com.google.firebase.auth.FirebaseUser;
+
+import com.example.localjobs.ChatUser;
+
 import java.util.List;
 
 public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatViewHolder> {
-
     private Context context;
     private List<ChatUser> chatUsers;
+    private final OnChatClickListener clickListener;
 
-    public ChatListAdapter(Context context, List<ChatUser> chatUsers) {
-        this.context = context;
-        this.chatUsers = chatUsers;
+    public interface OnChatClickListener {
+        void onChatClick(String receiverEmail);
     }
 
-    @NonNull
+    public ChatListAdapter(Context context, List<ChatUser> chatUsers, OnChatClickListener clickListener) {
+        this.context = context;
+        this.chatUsers = chatUsers;
+        this.clickListener = clickListener;
+    }
+
     @Override
-    public ChatViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+    public ChatViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(context).inflate(R.layout.item_chat_user, parent, false);
         return new ChatViewHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
-        ChatUser user = chatUsers.get(position);
-        holder.username.setText(user.getLastMessage());
-
-        holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(v.getContext(), ChatActivity.class);
-            intent.putExtra("receiverEmail", user.getEmail());  // Pass receiver's email
-            v.getContext().startActivity(intent);
-        });
+    public void onBindViewHolder(ChatViewHolder holder, int position) {
+        ChatUser chatUser = chatUsers.get(position);
+        holder.userEmail.setText(chatUser.getUserEmail());
+        holder.lastMessage.setText(chatUser.getLastMessage());
+        holder.itemView.setOnClickListener(v -> clickListener.onChatClick(chatUser.getUserEmail()));
     }
 
     @Override
@@ -46,12 +45,13 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
         return chatUsers.size();
     }
 
-    public static class ChatViewHolder extends RecyclerView.ViewHolder {
-        TextView username;
+    static class ChatViewHolder extends RecyclerView.ViewHolder {
+        TextView userEmail, lastMessage;
 
-        public ChatViewHolder(@NonNull View itemView) {
+        ChatViewHolder(View itemView) {
             super(itemView);
-            username = itemView.findViewById(R.id.chatUserName);
+            userEmail = itemView.findViewById(R.id.userEmail);
+            lastMessage = itemView.findViewById(R.id.lastMessage);
         }
     }
 }
