@@ -1,66 +1,120 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
+    android:background="#F5F7FA"
     android:padding="24dp"
-    android:background="#9ecbff">
+    tools:context=".PostJobActivity">
 
+    <!-- Header -->
+    <TextView
+        android:id="@+id/headerText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Post Job"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="#2C3E50"
+        android:layout_marginTop="24dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Job Title -->
     <EditText
         android:id="@+id/jobTitle"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:hint="Job Title"
-        android:textColor="#000000"
-        android:backgroundTint="#BBDEFB"
-        android:padding="16dp"
-        android:layout_marginBottom="16dp" />
+        android:textColor="#2C3E50"
+        android:textColorHint="#34495E"
+        android:background="@drawable/input_background"
+        android:padding="12dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginHorizontal="16dp"
+        app:layout_constraintTop_toBottomOf="@id/headerText"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Job Description -->
     <EditText
         android:id="@+id/jobDescription"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:hint="Job Description"
-        android:textColor="#000000"
-        android:backgroundTint="#BBDEFB"
-        android:padding="16dp"
-        android:layout_marginBottom="16dp" />
+        android:textColor="#2C3E50"
+        android:textColorHint="#34495E"
+        android:background="@drawable/input_background"
+        android:padding="12dp"
+        android:minHeight="100dp"
+        android:gravity="top"
+        android:layout_marginTop="16dp"
+        android:layout_marginHorizontal="16dp"
+        app:layout_constraintTop_toBottomOf="@id/jobTitle"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Job Location -->
     <EditText
         android:id="@+id/jobLocation"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:hint="Job Location"
-        android:textColor="#000000"
-        android:backgroundTint="#BBDEFB"
-        android:padding="16dp"
-        android:layout_marginBottom="16dp" />
+        android:textColor="#2C3E50"
+        android:textColorHint="#34495E"
+        android:background="@drawable/input_background"
+        android:padding="12dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginHorizontal="16dp"
+        app:layout_constraintTop_toBottomOf="@id/jobDescription"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Job Date -->
     <EditText
         android:id="@+id/jobDate"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:hint="Date"
+        android:hint="Date (MM/DD/YYYY)"
         android:inputType="date"
-        android:textColor="#000000"
-        android:backgroundTint="#BBDEFB"
-        android:padding="16dp"
-        android:layout_marginBottom="16dp" />
+        android:textColor="#2C3E50"
+        android:textColorHint="#34495E"
+        android:background="@drawable/input_background"
+        android:padding="12dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginHorizontal="16dp"
+        app:layout_constraintTop_toBottomOf="@id/jobLocation"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Job Category Spinner -->
     <Spinner
         android:id="@+id/job_category"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp" />
+        android:background="@drawable/spinner_background"
+        android:padding="12dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginHorizontal="16dp"
+        app:layout_constraintTop_toBottomOf="@id/jobDate"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Post Job Button -->
     <Button
         android:id="@+id/postJobButton"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Post Job"
         android:textColor="#FFFFFF"
-        android:backgroundTint="#1976D2"
-        android:padding="16dp" />
+        android:backgroundTint="#2C3E50"
+        android:padding="12dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginHorizontal="32dp"
+        app:layout_constraintTop_toBottomOf="@id/job_category"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-</LinearLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

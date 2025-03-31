@@ -3,6 +3,7 @@ package com.example.localjobs;
 public class ChatUser {
     private String userId;
     private String lastMessage;
+    private String email;
 
     public ChatUser(String userId, String lastMessage) {
         this.userId = userId;
@@ -15,5 +16,9 @@ public class ChatUser {
 
     public String getLastMessage() {
         return lastMessage;
+    }
+
+    public String getEmail() {
+        return email;
     }
 }

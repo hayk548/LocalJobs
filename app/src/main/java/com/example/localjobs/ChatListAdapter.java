@@ -35,10 +35,9 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
         holder.username.setText(user.getLastMessage());
 
         holder.itemView.setOnClickListener(v -> {
-            Intent intent = new Intent(context, ChatActivity.class);
-            intent.putExtra("receiverId", user.getUserId());
-            intent.putExtra("receiverName", user.getLastMessage());
-            context.startActivity(intent);
+            Intent intent = new Intent(v.getContext(), ChatActivity.class);
+            intent.putExtra("receiverEmail", user.getEmail());  // Pass receiver's email
+            v.getContext().startActivity(intent);
         });
     }
 

@@ -1,279 +1,167 @@
 package com.example.localjobs;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
-import android.text.TextUtils;
-import android.view.Window;
+import android.util.Base64;
+import android.util.Log;
+import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
-import com.squareup.picasso.Picasso;
+import com.google.firebase.firestore.ListenerRegistration;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.List;
 
 public class AccountActivity extends AppCompatActivity {
 
-    private static final int PICK_IMAGE_REQUEST = 1;
-    private FirebaseAuth mAuth;
+    private TextView userNameSurname, userEmail, userPhoneNumber;
+    private Button btnLogout;
+    private ImageView changePassword, profilePicture, deleteAccount;
     private FirebaseFirestore db;
-    private FirebaseStorage storage;
-    private FirebaseUser currentUser;
-    private Uri profileImageUri;
+    private ListenerRegistration profileListener;
 
-    private EditText editTextUsername, editTextNewPassword;
-    private Button btnSaveUsername, btnChangePassword, btnUploadImage, btnLogout;
-    private ImageView imageViewProfile;
-
-    private JobAdapter appliedJobAdapter;
-    private List<Job> appliedJobsList = new ArrayList<>();  // Initialize with empty list
+    // Launcher to pick an image
+    private final ActivityResultLauncher<String> imagePickerLauncher =
+            registerForActivityResult(new ActivityResultContracts.GetContent(), uri -> {
+                if (uri != null) {
+                    uploadImageToFirestore(uri);
+                }
+            });
 
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_account);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            Window window = getWindow();
-            window.setStatusBarColor(getResources().getColor(R.color.light_blue)); // Set status bar color
-        }
+        initializeViews();
 
-        mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
-        storage = FirebaseStorage.getInstance();
-        currentUser = mAuth.getCurrentUser();
 
-        // Initialize RecyclerView and Adapter
-        appliedJobAdapter = new JobAdapter(appliedJobsList, this);
+        // Set up profile picture change
+        profilePicture.setOnClickListener(v -> imagePickerLauncher.launch("image/*"));
+        deleteAccount.setOnClickListener(v -> startActivity(new Intent(AccountActivity.this, DeleteAccountActivity.class)));
 
-        editTextUsername = findViewById(R.id.editTextUsername);
-        editTextNewPassword = findViewById(R.id.editTextNewPassword);
-        btnSaveUsername = findViewById(R.id.btnSaveUsername);
-        btnChangePassword = findViewById(R.id.btnChangePassword);
-        btnUploadImage = findViewById(R.id.btnUploadImage);
-        imageViewProfile = findViewById(R.id.imageViewProfile);
-        btnLogout = findViewById(R.id.btnLogout);
+        FirebaseUser firebaseUser = FirebaseAuth.getInstance().getCurrentUser();
 
-        loadUserData();
-
-        if (currentUser != null) {
-            loadAppliedJobs();
+        if (firebaseUser != null) {
+            setupProfileListener(firebaseUser);
+            fetchUserData(firebaseUser);
+            loadUserProfile(firebaseUser);
         }
 
-        btnSaveUsername.setOnClickListener(v -> {
-            String username = editTextUsername.getText().toString().trim();
-            if (!TextUtils.isEmpty(username)) {
-                updateUsername(username);
-            } else {
-                Toast.makeText(this, "Username cannot be empty", Toast.LENGTH_SHORT).show();
-            }
-        });
+        // Change password action
+        changePassword.setOnClickListener(v -> startActivity(new Intent(AccountActivity.this, ChangePasswordActivity.class)));
 
-        btnChangePassword.setOnClickListener(v -> {
-            String newPassword = editTextNewPassword.getText().toString().trim();
-            if (!TextUtils.isEmpty(newPassword) && newPassword.length() >= 6) {
-                changePassword(newPassword);
-            } else {
-                Toast.makeText(this, "Password must be at least 6 characters", Toast.LENGTH_SHORT).show();
-            }
-        });
-
+        // Logout action
         btnLogout.setOnClickListener(v -> {
             FirebaseAuth.getInstance().signOut();
-            Intent intent = new Intent(AccountActivity.this, MainActivity.class);
-            startActivity(intent);
+            clearSharedPreferences();
+            startActivity(new Intent(AccountActivity.this, MainActivity.class));
             finish();
+            Toast.makeText(AccountActivity.this, "Logged Out", Toast.LENGTH_SHORT).show();
         });
-
-        btnUploadImage.setOnClickListener(v -> openFileChooser());
     }
 
-    private void loadAppliedJobs() {
-        String currentUserId = currentUser.getUid();
-
-        // Query the Firestore 'applications' collection for the jobs applied by the current user
-        db.collection("applications")
-                .whereEqualTo("userId", currentUserId)
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        List<String> appliedJobIds = new ArrayList<>();
-                        for (QueryDocumentSnapshot document : task.getResult()) {
-                            String jobId = document.getString("jobId");
-                            appliedJobIds.add(jobId);
-                        }
-                        fetchJobDetails(appliedJobIds);
-                    } else {
-                        Toast.makeText(AccountActivity.this, "Error loading applied jobs", Toast.LENGTH_SHORT).show();
-                    }
-                });
+    private void initializeViews() {
+        profilePicture = findViewById(R.id.profilePicture);
+        changePassword = findViewById(R.id.changePassword);
+        userNameSurname = findViewById(R.id.UserNameSurname);
+        userPhoneNumber = findViewById(R.id.userPhoneNumber);
+        userEmail = findViewById(R.id.UserEmail);
+        btnLogout = findViewById(R.id.btnLogout);
+        deleteAccount = findViewById(R.id.deleteAccount);
     }
 
-    private void fetchJobDetails(List<String> appliedJobIds) {
-        if (appliedJobIds.isEmpty()) {
-            return;
-        }
-        db.collection("jobs")
-                .whereIn("jobId", appliedJobIds)
-                .get()
-                .addOnCompleteListener(task -> {
-                    if (task.isSuccessful()) {
-                        List<Job> jobList = new ArrayList<>();
-                        for (QueryDocumentSnapshot document : task.getResult()) {
-                            Job job = document.toObject(Job.class);
-                            jobList.add(job);
-                        }
-
-                        // Clear the old list and add new data
-                        appliedJobsList.clear();
-                        appliedJobsList.addAll(jobList);
-                        appliedJobAdapter.notifyDataSetChanged();  // Notify the adapter to update RecyclerView
-                    } else {
-                        Toast.makeText(AccountActivity.this, "Error fetching job details", Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-
-    private void openFileChooser() {
-        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-        startActivityForResult(intent, PICK_IMAGE_REQUEST);
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.getData() != null) {
-            profileImageUri = data.getData();
-            imageViewProfile.setImageURI(profileImageUri);
-
-            // Upload image to Firebase (only if you still want to upload)
-            uploadImageToFirebase();
-
-            // Save image locally in internal storage
-            saveImageLocally(profileImageUri);
-        }
-    }
-
-    private void uploadImageToFirebase() {
-        if (profileImageUri == null) return;
-
-        String userId = currentUser.getUid();
-        StorageReference fileReference = storage.getReference("profile_images/" + userId + ".jpg");
-
-        fileReference.putFile(profileImageUri)
-                .addOnSuccessListener(taskSnapshot -> {
-                    // Ensure the file exists before getting the URL
-                    fileReference.getDownloadUrl()
-                            .addOnSuccessListener(uri -> {
-                                saveImageUrlToFirestore(uri.toString());
-                            })
-                            .addOnFailureListener(e -> Toast.makeText(AccountActivity.this, "Failed to get download URL", Toast.LENGTH_SHORT).show());
-                })
-                .addOnFailureListener(e -> Toast.makeText(AccountActivity.this, "Upload failed: " + e.getMessage(), Toast.LENGTH_SHORT).show());
-    }
-
-    private void saveImageUrlToFirestore(String imageUrl) {
-        String userId = currentUser.getUid();
-        DocumentReference userRef = db.collection("users").document(userId);
-
-        userRef.update("profileImage", imageUrl)
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(AccountActivity.this, "Profile Image Updated", Toast.LENGTH_SHORT).show();
-                    Picasso.get().load(imageUrl).into(imageViewProfile);
-                })
-                .addOnFailureListener(e -> Toast.makeText(AccountActivity.this, "Error saving image", Toast.LENGTH_SHORT).show());
-    }
-
-    private void saveImageLocally(Uri imageUri) {
-        try {
-            InputStream inputStream = getContentResolver().openInputStream(imageUri);
-
-            // Define the path to save the image in the internal storage
-            File file = new File(getFilesDir(), "profile_image.jpg");
-
-            // Create an output stream to save the image to the file
-            FileOutputStream outputStream = new FileOutputStream(file);
-
-            // Copy the input stream (image) to the output stream
-            byte[] buffer = new byte[1024];
-            int length;
-            while ((length = inputStream.read(buffer)) > 0) {
-                outputStream.write(buffer, 0, length);
-            }
-
-            // Close the streams
-            outputStream.flush();
-            outputStream.close();
-            inputStream.close();
-
-            // Optionally, save the file path to SharedPreferences for future use
-            saveImagePathToPreferences(file.getAbsolutePath());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void saveImagePathToPreferences(String imagePath) {
-        getSharedPreferences("userPrefs", MODE_PRIVATE)
-                .edit()
-                .putString("profileImage", imagePath)
-                .apply();
-    }
-
-    private void loadUserData() {
-        String userId = currentUser.getUid();
-        db.collection("users").document(userId)
+    private void fetchUserData(FirebaseUser firebaseUser) {
+        db.collection("users").document(firebaseUser.getUid())
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        String username = documentSnapshot.getString("username");
-                        String profileImage = documentSnapshot.getString("profileImage");
-
-                        if (username != null) {
-                            editTextUsername.setText(username);
-                        }
-
-                        if (profileImage != null && !profileImage.isEmpty()) {
-                            Picasso.get().load(profileImage).into(imageViewProfile);
-                        }
+                        userNameSurname.setText(documentSnapshot.getString("name"));
+                        userPhoneNumber.setText(documentSnapshot.getString("phoneNumber"));
                     }
                 })
-                .addOnFailureListener(e -> Toast.makeText(AccountActivity.this, "Error loading user data", Toast.LENGTH_SHORT).show());
+                .addOnFailureListener(e -> Log.e("AccountActivity", "Failed to fetch user data", e));
+
+        userEmail.setText(firebaseUser.getEmail());
     }
 
-    private void updateUsername(String username) {
-        String userId = currentUser.getUid();
-        db.collection("users").document(userId)
-                .update("username", username)
-                .addOnSuccessListener(aVoid -> Toast.makeText(AccountActivity.this, "Username updated", Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e -> Toast.makeText(AccountActivity.this, "Error updating username", Toast.LENGTH_SHORT).show());
+    private void loadUserProfile(FirebaseUser firebaseUser) {
+        Uri photoUrl = firebaseUser.getPhotoUrl();
+        Glide.with(this)
+                .load(photoUrl != null ? photoUrl : R.drawable.profile_picture)
+                .into(profilePicture);
     }
 
-    private void changePassword(String newPassword) {
-        currentUser.updatePassword(newPassword)
-                .addOnSuccessListener(aVoid -> Toast.makeText(AccountActivity.this, "Password changed successfully", Toast.LENGTH_SHORT).show())
-                .addOnFailureListener(e -> Toast.makeText(AccountActivity.this, "Error changing password", Toast.LENGTH_SHORT).show());
+    private void setupProfileListener(FirebaseUser firebaseUser) {
+        profileListener = db.collection("users").document(firebaseUser.getUid())
+                .addSnapshotListener((documentSnapshot, e) -> {
+                    if (e == null && documentSnapshot != null && documentSnapshot.exists()) {
+                        userNameSurname.setText(documentSnapshot.getString("name"));
+                        userPhoneNumber.setText(documentSnapshot.getString("phoneNumber"));
+                        loadProfileImage(documentSnapshot.getString("profileImage"));
+                    }
+                });
+    }
+
+    private void loadProfileImage(String base64Image) {
+        if (base64Image != null && !base64Image.isEmpty()) {
+            byte[] decodedString = Base64.decode(base64Image, Base64.DEFAULT);
+            Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+            Glide.with(this)
+                    .load(decodedByte)
+                    .transform(new CircleCrop())
+                    .into(profilePicture);
+        }
+    }
+
+    private void uploadImageToFirestore(Uri imageUri) {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            try (InputStream inputStream = getContentResolver().openInputStream(imageUri)) {
+                Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 50, baos);
+                byte[] imageBytes = baos.toByteArray();
+
+                if (imageBytes.length > 900000) {
+                    Toast.makeText(this, "Image too large, please select a smaller image", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                String base64Image = Base64.encodeToString(imageBytes, Base64.DEFAULT);
+
+                db.collection("users").document(user.getUid())
+                        .update("profileImage", base64Image)
+                        .addOnSuccessListener(aVoid -> Toast.makeText(this, "Profile picture updated", Toast.LENGTH_SHORT).show())
+                        .addOnFailureListener(e -> Log.e("AccountActivity", "Failed to upload image to Firestore", e));
+            } catch (Exception e) {
+                Log.e("AccountActivity", "Error processing image", e);
+            }
+        }
+    }
+
+    private void clearSharedPreferences() {
+        SharedPreferences preferences = getSharedPreferences("loginPrefs", Context.MODE_PRIVATE);
+        preferences.edit().clear().apply();
     }
 }

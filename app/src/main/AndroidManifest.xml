@@ -42,6 +42,8 @@
         <activity android:name=".EditJobActivity" />
         <activity android:name=".ChatActivity" />
         <activity android:name=".ChatsActivity" />
+        <activity android:name=".DeleteAccountActivity" />
+        <activity android:name=".ChangePasswordActivity" />
 
     </application>
 

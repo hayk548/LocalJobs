@@ -1,9 +1,11 @@
 package com.example.localjobs;
 
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.widget.ImageButton;
 
 import androidx.annotation.Nullable;
@@ -33,6 +35,11 @@ public class ChatsActivity extends AppCompatActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_chats);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            Window window = getWindow();
+            window.setStatusBarColor(getResources().getColor(R.color.light_blue)); // Set status bar color
+        }
 
         // Initialize RecyclerView
         chatsRecyclerView = findViewById(R.id.chatRecyclerView);
@@ -88,7 +95,7 @@ public class ChatsActivity extends AppCompatActivity {
                     for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
                         ChatMetadata chatMetadata = doc.toObject(ChatMetadata.class);
                         if (chatMetadata != null) {
-                            String receiverId = chatMetadata.getReceiverId();
+                            String receiverId = chatMetadata.getReceiverEmail();
                             if (!uniqueChatUsers.contains(receiverId)) {
                                 uniqueChatUsers.add(receiverId);
                                 tempChatList.add(new ChatUser(receiverId, chatMetadata.getLastMessage()));
@@ -110,7 +117,7 @@ public class ChatsActivity extends AppCompatActivity {
                                 for (DocumentSnapshot doc : receiverSnapshot.getDocuments()) {
                                     ChatMetadata chatMetadata = doc.toObject(ChatMetadata.class);
                                     if (chatMetadata != null) {
-                                        String senderId = chatMetadata.getSenderId();
+                                        String senderId = chatMetadata.getSenderEmail();
                                         if (!uniqueChatUsers.contains(senderId)) {
                                             uniqueChatUsers.add(senderId);
                                             tempChatList.add(new ChatUser(senderId, chatMetadata.getLastMessage()));

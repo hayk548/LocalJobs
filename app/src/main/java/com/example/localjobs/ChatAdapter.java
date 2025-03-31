@@ -39,6 +39,7 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
 
         SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
         holder.timestamp.setText(sdf.format(message.getTimestamp()));
+
     }
 
     @Override

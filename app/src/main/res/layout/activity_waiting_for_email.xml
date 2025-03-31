@@ -1,65 +1,82 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="#F5F7FA"
     android:padding="24dp"
-    android:background="#9ecbff">
+    tools:context=".WaitingForEmailActivity">
 
+    <!-- Waiting Message -->
     <TextView
         android:id="@+id/tvWaiting"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Waiting for Email Verification..."
-        android:textSize="18sp"
-        android:textColor="#1976D2"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="50dp" />
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="#2C3E50"
+        android:layout_marginTop="80dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Progress Bar -->
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@id/tvWaiting"
-        android:layout_marginTop="20dp"
-        android:indeterminateTint="#1976D2"/>
+        android:indeterminateTint="#34495E"
+        android:layout_marginTop="24dp"
+        app:layout_constraintTop_toBottomOf="@id/tvWaiting"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Timer Text -->
     <TextView
         android:id="@+id/timerTextView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Resend available in 60s"
         android:textSize="16sp"
-        android:textColor="#1976D2"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@id/progressBar"
-        android:layout_marginTop="20dp" />
+        android:textColor="#34495E"
+        android:layout_marginTop="24dp"
+        app:layout_constraintTop_toBottomOf="@id/progressBar"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Check Verification Button -->
     <Button
         android:id="@+id/checkVerificationButton"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Check Verification"
         android:textSize="16sp"
         android:textColor="#FFFFFF"
-        android:backgroundTint="#1976D2"
+        android:backgroundTint="#2C3E50"
         android:padding="12dp"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@id/timerTextView"
-        android:layout_marginTop="20dp" />
+        android:layout_marginTop="32dp"
+        android:layout_marginHorizontal="32dp"
+        app:layout_constraintTop_toBottomOf="@id/timerTextView"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
+    <!-- Resend Email Button -->
     <Button
         android:id="@+id/resendEmailButton"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:text="Resend Email"
         android:textSize="16sp"
         android:textColor="#FFFFFF"
-        android:backgroundTint="#90CAF9"
+        android:backgroundTint="#34495E"
         android:padding="12dp"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@id/checkVerificationButton"
-        android:layout_marginTop="10dp"
-        android:enabled="false" />
+        android:layout_marginTop="16dp"
+        android:layout_marginHorizontal="32dp"
+        android:enabled="false"
+        app:layout_constraintTop_toBottomOf="@id/checkVerificationButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-</RelativeLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
