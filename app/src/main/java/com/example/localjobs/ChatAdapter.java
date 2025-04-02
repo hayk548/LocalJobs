@@ -1,6 +1,7 @@
 package com.example.localjobs;
 
 import android.content.Context;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -33,14 +34,20 @@ public class ChatAdapter extends RecyclerView.Adapter<ChatAdapter.ChatViewHolder
     }
 
     @Override
-    public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
-        ChatMessage message = chatMessages.get(position);
-        holder.messageText.setText(message.getMessage());
-
-        SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
-        holder.timestamp.setText(sdf.format(message.getTimestamp()));
-
-    }
+        public void onBindViewHolder(@NonNull ChatViewHolder holder, int position) {
+            ChatMessage message = chatMessages.get(position);
+            if (holder.messageText != null) {
+                holder.messageText.setText(message.getMessage());
+            } else {
+                Log.e("ChatAdapter", "messageText is null at position " + position);
+            }
+            if (holder.timestamp != null) {
+                SimpleDateFormat sdf = new SimpleDateFormat("hh:mm a", Locale.getDefault());
+                holder.timestamp.setText(sdf.format(message.getTimestamp()));
+            } else {
+                Log.e("ChatAdapter", "timestamp is null at position " + position);
+            }
+        }
 
     @Override
     public int getItemViewType(int position) {

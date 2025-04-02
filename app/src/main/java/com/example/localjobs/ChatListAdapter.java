@@ -6,9 +6,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 import androidx.recyclerview.widget.RecyclerView;
-
-import com.example.localjobs.ChatUser;
-
 import java.util.List;
 
 public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatViewHolder> {
@@ -17,7 +14,7 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
     private final OnChatClickListener clickListener;
 
     public interface OnChatClickListener {
-        void onChatClick(String receiverEmail);
+        void onChatClick(String receiverId);
     }
 
     public ChatListAdapter(Context context, List<ChatUser> chatUsers, OnChatClickListener clickListener) {
@@ -35,9 +32,9 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
     @Override
     public void onBindViewHolder(ChatViewHolder holder, int position) {
         ChatUser chatUser = chatUsers.get(position);
-        holder.userEmail.setText(chatUser.getUserEmail());
+        holder.chatName.setText(chatUser.getUsername()); // Display username
         holder.lastMessage.setText(chatUser.getLastMessage());
-        holder.itemView.setOnClickListener(v -> clickListener.onChatClick(chatUser.getUserEmail()));
+        holder.itemView.setOnClickListener(v -> clickListener.onChatClick(chatUser.getUserId()));
     }
 
     @Override
@@ -46,11 +43,11 @@ public class ChatListAdapter extends RecyclerView.Adapter<ChatListAdapter.ChatVi
     }
 
     static class ChatViewHolder extends RecyclerView.ViewHolder {
-        TextView userEmail, lastMessage;
+        TextView chatName, lastMessage;
 
         ChatViewHolder(View itemView) {
             super(itemView);
-            userEmail = itemView.findViewById(R.id.userEmail);
+            chatName = itemView.findViewById(R.id.chatName); // Update ID if needed
             lastMessage = itemView.findViewById(R.id.lastMessage);
         }
     }

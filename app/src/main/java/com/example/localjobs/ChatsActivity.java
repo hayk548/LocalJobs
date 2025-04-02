@@ -103,16 +103,30 @@ public class ChatsActivity extends AppCompatActivity {
             if (chatMetadata != null) {
                 List<String> users = (List<String>) doc.get("users");
                 String otherUserId = users.get(0).equals(currentUserId) ? users.get(1) : users.get(0);
+                String chatId = doc.getId();
+
                 if (!uniqueChatUsers.contains(otherUserId)) {
                     uniqueChatUsers.add(otherUserId);
-                    chatUsers.add(new ChatUser(otherUserId, chatMetadata.getLastMessage()));
+                    // Fetch username from users collection
+                    db.collection("users").document(otherUserId).get()
+                            .addOnSuccessListener(userDoc -> {
+                                String username = userDoc.exists() ? userDoc.getString("username") : "Unknown User";
+                                if (username == null) username = otherUserId; // Fallback to UID if username is null
+                                chatUsers.add(new ChatUser(chatId, otherUserId, username, chatMetadata.getLastMessage()));
+                                filteredChatUsers.clear();
+                                filteredChatUsers.addAll(chatUsers);
+                                chatListAdapter.notifyDataSetChanged();
+                            })
+                            .addOnFailureListener(e -> {
+                                Log.e("ChatsActivity", "Error fetching username for userId: " + otherUserId, e);
+                                chatUsers.add(new ChatUser(chatId, otherUserId, otherUserId, chatMetadata.getLastMessage()));
+                                filteredChatUsers.clear();
+                                filteredChatUsers.addAll(chatUsers);
+                                chatListAdapter.notifyDataSetChanged();
+                            });
                 }
             }
         }
-
-        filteredChatUsers.clear();
-        filteredChatUsers.addAll(chatUsers);
-        chatListAdapter.notifyDataSetChanged();
     }
 
     private void setupSearchBar() {
@@ -137,7 +151,7 @@ public class ChatsActivity extends AppCompatActivity {
         } else {
             String lowerQuery = query.toLowerCase();
             for (ChatUser user : chatUsers) {
-                if (user.getUserEmail().toLowerCase().contains(lowerQuery) || // Adjust if using UID instead
+                if (user.getUsername().toLowerCase().contains(lowerQuery) || // Filter by username
                         (user.getLastMessage() != null && user.getLastMessage().toLowerCase().contains(lowerQuery))) {
                     filteredChatUsers.add(user);
                 }
@@ -148,7 +162,7 @@ public class ChatsActivity extends AppCompatActivity {
 
     private void startChatActivity(String receiverId) {
         Intent intent = new Intent(ChatsActivity.this, ChatActivity.class);
-        intent.putExtra("receiverId", receiverId); // Pass UID instead of email
+        intent.putExtra("receiverId", receiverId);
         startActivity(intent);
     }
 

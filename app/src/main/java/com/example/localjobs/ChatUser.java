@@ -1,19 +1,20 @@
 package com.example.localjobs;
 
 public class ChatUser {
-    private String userEmail;
+    private String chatId;      // Added to identify the chat
+    private String userId;      // Receiver's UID
+    private String username;    // Username to display
     private String lastMessage;
 
-    public ChatUser(String userEmail, String lastMessage) {
-        this.userEmail = userEmail;
+    public ChatUser(String chatId, String userId, String username, String lastMessage) {
+        this.chatId = chatId;
+        this.userId = userId;
+        this.username = username;
         this.lastMessage = lastMessage;
     }
 
-    public String getUserEmail() {
-        return userEmail;
-    }
-
-    public String getLastMessage() {
-        return lastMessage;
-    }
+    public String getChatId() { return chatId; }
+    public String getUserId() { return userId; }
+    public String getUsername() { return username; }
+    public String getLastMessage() { return lastMessage; }
 }

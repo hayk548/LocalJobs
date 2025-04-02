@@ -73,12 +73,6 @@ public class JobsActivity extends AppCompatActivity {
         postJobButton.setOnClickListener(v -> startActivity(new Intent(JobsActivity.this, PostJobActivity.class)));
         accountButton.setOnClickListener(v -> startActivity(new Intent(JobsActivity.this, AccountActivity.class)));
 
-//        btnSortJobs.setOnClickListener(v -> {
-//            sortByNearest = !sortByNearest;
-//            btnSortJobs.setText(sortByNearest ? "Nearest First" : "Farthest First");
-//            loadJobs();
-//        });
-
         openMapButton = findViewById(R.id.openMapButton);
 
         openMapButton.setOnClickListener(v -> {
