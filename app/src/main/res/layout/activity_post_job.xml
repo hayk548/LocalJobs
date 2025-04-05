@@ -78,16 +78,19 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:hint="Date (MM/DD/YYYY)"
-        android:inputType="date"
         android:textColor="#2C3E50"
         android:textColorHint="#34495E"
         android:background="@drawable/input_background"
         android:padding="12dp"
         android:layout_marginTop="16dp"
         android:layout_marginHorizontal="16dp"
+        android:focusable="false"
+        android:clickable="true"
         app:layout_constraintTop_toBottomOf="@id/jobLocation"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
+
 
     <!-- Job Category Spinner -->
     <Spinner
