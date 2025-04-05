@@ -1,136 +1,149 @@
 package com.example.localjobs;
 
-import androidx.fragment.app.FragmentActivity;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Location;
-import android.os.Build;
+import android.location.Address;
+import android.location.Geocoder;
 import android.os.Bundle;
-import android.view.Window;
+import android.view.KeyEvent;
+import android.view.View;
+import android.view.inputmethod.EditorInfo;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import com.google.android.gms.location.FusedLocationProviderClient;
-import com.google.android.gms.location.LocationServices;
+
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.firebase.firestore.FirebaseFirestore;
-import com.google.firebase.firestore.QueryDocumentSnapshot;
-import com.google.android.gms.tasks.OnSuccessListener;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+
+import java.io.IOException;
 import java.util.List;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends AppCompatActivity implements OnMapReadyCallback {
 
     private GoogleMap mMap;
-    private FirebaseFirestore db;
-    private FusedLocationProviderClient fusedLocationClient;
-    private static final int LOCATION_PERMISSION_REQUEST = 1;
-    private double userLat, userLng;
+    private EditText searchLocation;
+    private Button okButton;
+    private Marker selectedMarker;
+    private Geocoder geocoder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            Window window = getWindow();
-            window.setStatusBarColor(getResources().getColor(R.color.light_blue)); // Set status bar color
-        }
-
-        Intent intent = getIntent();
-        double userLat = intent.getDoubleExtra("user_lat", 0.0);
-        double userLng = intent.getDoubleExtra("user_lng", 0.0);
+        searchLocation = findViewById(R.id.searchLocation);
+        okButton = findViewById(R.id.okButton);
+        geocoder = new Geocoder(this);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
-        if (mapFragment != null) {
-            mapFragment.getMapAsync(this);
-        }
+        mapFragment.getMapAsync(this);
 
-        db = FirebaseFirestore.getInstance();
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        // Search on Enter key press
+        searchLocation.setOnEditorActionListener((v, actionId, event) -> {
+            if (actionId == EditorInfo.IME_ACTION_SEARCH || (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
+                searchAddress();
+                return true;
+            }
+            return false;
+        });
+
+        okButton.setOnClickListener(v -> returnSelectedLocation());
     }
 
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-        getUserLocation();
+
+        // Enable draggable marker
+        mMap.setOnMapClickListener(latLng -> {
+            updateMarker(latLng);
+        });
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            mMap.setMyLocationEnabled(true);
+            // Start with a default location (e.g., user's location or a default)
+            LatLng defaultLocation = new LatLng(37.7749, -122.4194); // San Francisco as default
+            updateMarker(defaultLocation);
+            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 10));
+        } else {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, 1);
+        }
     }
 
-    private void getUserLocation() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION}, LOCATION_PERMISSION_REQUEST);
+    private void searchAddress() {
+        String location = searchLocation.getText().toString().trim();
+        if (location.isEmpty()) {
+            Toast.makeText(this, "Enter a location to search", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        fusedLocationClient.getLastLocation().addOnSuccessListener(new OnSuccessListener<Location>() {
-            @Override
-            public void onSuccess(Location location) {
-                if (location != null) {
-                    userLat = location.getLatitude();
-                    userLng = location.getLongitude();
-
-                    LatLng userLatLng = new LatLng(userLat, userLng);
-                    mMap.addMarker(new MarkerOptions().position(userLatLng).title("Your Location"));
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLatLng, 12));
-
-                    loadJobLocations();
-                }
+        try {
+            List<Address> addresses = geocoder.getFromLocationName(location, 1);
+            if (addresses != null && !addresses.isEmpty()) {
+                Address address = addresses.get(0);
+                LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
+                updateMarker(latLng);
+                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15));
+            } else {
+                Toast.makeText(this, "Location not found", Toast.LENGTH_SHORT).show();
             }
-        });
+        } catch (IOException e) {
+            Toast.makeText(this, "Search error: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
-    private void loadJobLocations() {
-        db.collection("jobs").get().addOnCompleteListener(task -> {
-            if (task.isSuccessful() && task.getResult() != null) {
-                List<Job> jobList = new ArrayList<>();
-
-                for (QueryDocumentSnapshot document : task.getResult()) {
-                    Job job = document.toObject(Job.class);
-                    if (job != null) {
-                        LatLng jobLocation = new LatLng(job.getLatitude(), job.getLongitude());
-                        mMap.addMarker(new MarkerOptions().position(jobLocation).title(job.getTitle()));
-
-                        double distance = calculateDistance(userLat, userLng, job.getLatitude(), job.getLongitude());
-                        jobList.add(new Job(job.getJobId(), job.getTitle(), job.getDescription(), job.getLocation(), job.getDate(), job.getUserId(), job.getLatitude(), job.getLongitude(), job.getCategory()));
-                    }
-                }
-
-                Collections.sort(jobList, Comparator.comparingDouble(job -> calculateDistance(userLat, userLng, job.getLatitude(), job.getLongitude())));
-
-                if (!jobList.isEmpty()) {
-                    LatLng nearestJob = new LatLng(jobList.get(0).getLatitude(), jobList.get(0).getLongitude());
-                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(nearestJob, 10));
-                }
-            }
-        });
+    private void updateMarker(LatLng latLng) {
+        if (selectedMarker != null) {
+            selectedMarker.remove();
+        }
+        selectedMarker = mMap.addMarker(new MarkerOptions()
+                .position(latLng)
+                .draggable(true));
+        selectedMarker.setPosition(latLng); // Update position if dragged
+        mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
     }
 
-    private double calculateDistance(double userLat, double userLng, double jobLat, double jobLng) {
-        final int R = 6371;
-        double latDistance = Math.toRadians(jobLat - userLat);
-        double lonDistance = Math.toRadians(jobLng - userLng);
-        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                + Math.cos(Math.toRadians(userLat)) * Math.cos(Math.toRadians(jobLat))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-        return R * c;
+    private void returnSelectedLocation() {
+        if (selectedMarker == null) {
+            Toast.makeText(this, "Please select a location", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        LatLng selectedLatLng = selectedMarker.getPosition();
+        try {
+            List<Address> addresses = geocoder.getFromLocation(selectedLatLng.latitude, selectedLatLng.longitude, 1);
+            if (addresses != null && !addresses.isEmpty()) {
+                Address address = addresses.get(0);
+                String addressLine = address.getAddressLine(0); // Full address
+                Intent result = new Intent();
+                result.putExtra("selected_address", addressLine);
+                setResult(RESULT_OK, result);
+                finish();
+            } else {
+                Toast.makeText(this, "Could not get address", Toast.LENGTH_SHORT).show();
+            }
+        } catch (IOException e) {
+            Toast.makeText(this, "Error getting address: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == LOCATION_PERMISSION_REQUEST) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getUserLocation();
+        if (requestCode == 1 && grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+                mMap.setMyLocationEnabled(true);
             }
         }
     }
