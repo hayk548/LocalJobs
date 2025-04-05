@@ -102,7 +102,7 @@ public class AccountActivity extends AppCompatActivity {
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        userNameSurname.setText(documentSnapshot.getString("username"));
+                        userNameSurname.setText(documentSnapshot.getString("name"));
                         userPhoneNumber.setText(documentSnapshot.getString("phoneNumber"));
                     }
                 })

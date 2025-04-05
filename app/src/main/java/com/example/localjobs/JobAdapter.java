@@ -1,5 +1,6 @@
 package com.example.localjobs;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
@@ -79,16 +80,25 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
                                         context.startActivity(intent);
                                         return true;
                                     } else if (item.getItemId() == R.id.menu_delete) {
-                                        db.collection("jobs").document(job.getJobId())
-                                                .delete()
-                                                .addOnSuccessListener(aVoid -> {
-                                                    Toast.makeText(context, "Job deleted successfully!", Toast.LENGTH_SHORT).show();
-                                                    jobList.remove(position);
-                                                    notifyItemRemoved(position);
+                                        new AlertDialog.Builder(context)
+                                                .setTitle("Delete Job")
+                                                .setMessage("Are you sure you want to delete '" + job.getTitle() + "'? This action cannot be undone.")
+                                                .setPositiveButton("Delete", (dialog, which) -> {
+                                                    db.collection("jobs").document(job.getJobId())
+                                                            .delete()
+                                                            .addOnSuccessListener(aVoid -> {
+                                                                Toast.makeText(context, "Job deleted successfully!", Toast.LENGTH_SHORT).show();
+                                                                jobList.remove(position);
+                                                                notifyItemRemoved(position);
+                                                                notifyItemRangeChanged(position, jobList.size());
+                                                            })
+                                                            .addOnFailureListener(e -> {
+                                                                Toast.makeText(context, "Failed to delete job: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                            });
                                                 })
-                                                .addOnFailureListener(e -> {
-                                                    Toast.makeText(context, "Failed to delete job. Try again.", Toast.LENGTH_SHORT).show();
-                                                });
+                                                .setNegativeButton("Cancel", null)
+                                                .setIcon(android.R.drawable.ic_dialog_alert)
+                                                .show();
                                         return true;
                                     }
                                     return false;
