@@ -76,7 +76,7 @@ public class JobsActivity extends AppCompatActivity {
         openMapButton = findViewById(R.id.openMapButton);
 
         openMapButton.setOnClickListener(v -> {
-            Intent intent = new Intent(JobsActivity.this, MapsActivity.class);
+            Intent intent = new Intent(JobsActivity.this, MapsActivity2.class);
             intent.putExtra("user_lat", userLat);
             intent.putExtra("user_lng", userLng);
             startActivity(intent);

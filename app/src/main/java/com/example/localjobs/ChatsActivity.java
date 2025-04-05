@@ -68,7 +68,7 @@ public class ChatsActivity extends AppCompatActivity {
         chatsButton.setOnClickListener(v -> {});
         postJobButton.setOnClickListener(v -> navigateTo(PostJobActivity.class));
         accountButton.setOnClickListener(v -> navigateTo(AccountActivity.class));
-        openMapButton.setOnClickListener(v -> navigateTo(MapsActivity.class));
+        openMapButton.setOnClickListener(v -> navigateTo(MapsActivity2.class));
     }
 
     private void loadChats() {
