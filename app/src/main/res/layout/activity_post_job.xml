@@ -91,6 +91,7 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
 
+
     <!-- Job Category Spinner -->
     <Spinner
         android:id="@+id/job_category"
