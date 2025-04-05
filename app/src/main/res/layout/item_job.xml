@@ -34,7 +34,7 @@
         android:layout_marginEnd="8dp"
         app:layout_constraintTop_toTopOf="@id/jobCategoryImage"
         app:layout_constraintStart_toEndOf="@id/jobCategoryImage"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toStartOf="@id/settingsButton" />
 
     <!-- Job Category -->
     <TextView
@@ -66,60 +66,50 @@
         app:layout_constraintStart_toEndOf="@id/jobCategoryImage"
         app:layout_constraintEnd_toEndOf="parent" />
 
-    <!-- Apply Button -->
+    <!-- Settings Icon (Visible only for owned jobs) -->
+    <ImageButton
+        android:id="@+id/settingsButton"
+        android:layout_width="36dp"
+        android:layout_height="36dp"
+        android:src="@drawable/ic_settings"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        app:tint="#34495E"
+        android:contentDescription="Settings"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <!-- Apply Button (Visible for non-owned jobs) -->
     <Button
         android:id="@+id/applyButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_width="100dp"
+        android:layout_height="36dp"
         android:text="Apply"
+        android:textSize="14sp"
         android:textColor="#FFFFFF"
         android:backgroundTint="#2C3E50"
-        android:padding="10dp"
+        android:padding="4dp"
         android:layout_marginTop="16dp"
+        android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/jobDescription"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toStartOf="@id/chatButton" />
 
-    <!-- Chat Button -->
+    <!-- Chat Button (Visible for non-owned jobs) -->
     <Button
         android:id="@+id/chatButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_width="100dp"
+        android:layout_height="36dp"
         android:text="Chat"
+        android:textSize="14sp"
         android:textColor="#FFFFFF"
         android:backgroundTint="#34495E"
-        android:padding="10dp"
-        android:layout_marginTop="8dp"
-        app:layout_constraintTop_toBottomOf="@id/applyButton"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- Edit Button -->
-    <Button
-        android:id="@+id/editButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Edit"
-        android:textColor="#2C3E50"
-        android:backgroundTint="#f0f0f0"
-        android:padding="10dp"
-        android:layout_marginTop="8dp"
-        app:layout_constraintTop_toBottomOf="@id/chatButton"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
-    <!-- Delete Button -->
-    <Button
-        android:id="@+id/deleteButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:text="Delete"
-        android:textColor="#FFFFFF"
-        android:backgroundTint="#E74C3C"
-        android:padding="10dp"
-        android:layout_marginTop="8dp"
-        app:layout_constraintTop_toBottomOf="@id/editButton"
-        app:layout_constraintStart_toStartOf="parent"
+        android:padding="4dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginStart="8dp"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/jobDescription"
+        app:layout_constraintStart_toEndOf="@id/applyButton"
         app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

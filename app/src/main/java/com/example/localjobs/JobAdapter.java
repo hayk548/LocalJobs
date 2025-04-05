@@ -3,19 +3,19 @@ package com.example.localjobs;
 import android.content.Context;
 import android.content.Intent;
 import android.view.LayoutInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
-
 import java.util.List;
 
 public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
@@ -48,6 +48,13 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         String currentUserId = (currentUser != null) ? currentUser.getUid() : "";
 
+        // Set common job details
+        holder.jobTitle.setText(job.getTitle());
+        holder.jobCategory.setText(job.getCategory());
+        holder.jobDescription.setText(job.getDescription());
+        int categoryImageResId = getCategoryImage(job.getCategory());
+        holder.jobCategoryImage.setImageResource(categoryImageResId);
+
         // Check if the user has already applied for this job
         db.collection("applications")
                 .whereEqualTo("jobId", job.getJobId())
@@ -55,87 +62,84 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful() && task.getResult().isEmpty()) {
-                        // If the user has NOT applied, bind the job data
-                        holder.jobTitle.setText(job.getTitle());
-                        holder.jobCategory.setText(job.getCategory());
-                        holder.jobDescription.setText(job.getDescription());
-
-                        int categoryImageResId = getCategoryImage(job.getCategory());
-                        holder.jobCategoryImage.setImageResource(categoryImageResId);
-
-                        // Set visibility of edit and delete buttons
+                        // User has not applied yet
                         if (job.getUserId() != null && job.getUserId().equals(currentUserId)) {
-                            holder.editButton.setVisibility(View.VISIBLE);
-                            holder.deleteButton.setVisibility(View.VISIBLE);
-                        } else {
-                            holder.editButton.setVisibility(View.GONE);
-                            holder.deleteButton.setVisibility(View.GONE);
-                        }
+                            // Job is mine: Show settings icon with dropdown
+                            holder.settingsButton.setVisibility(View.VISIBLE);
+                            holder.applyButton.setVisibility(View.GONE);
+                            holder.chatButton.setVisibility(View.GONE);
 
-                        holder.chatButton.setOnClickListener(v -> {
-                            String jobPosterId = job.getUserId(); // Job creator's UID
-
-                            if (!currentUserId.equals(jobPosterId)) { // Prevent chatting with yourself
-                                Intent intent = new Intent(context, ChatActivity.class);
-                                intent.putExtra("receiverId", jobPosterId); // Pass UID instead of email
-                                context.startActivity(intent);
-                            } else {
-                                Toast.makeText(context, "You cannot chat with yourself", Toast.LENGTH_SHORT).show();
-                            }
-                        });
-
-                        holder.editButton.setOnClickListener(v -> {
-                            Intent intent = new Intent(context, EditJobActivity.class);
-                            intent.putExtra("jobId", job.getJobId()); // Pass the job ID to the edit activity
-                            context.startActivity(intent);
-                        });
-
-                        holder.deleteButton.setOnClickListener(v -> {
-                            db.collection("jobs").document(job.getJobId())
-                                    .delete()
-                                    .addOnSuccessListener(aVoid -> {
-                                        Toast.makeText(context, "Job deleted successfully!", Toast.LENGTH_SHORT).show();
-                                        jobList.remove(position);  // Remove from list
-                                        notifyItemRemoved(position); // Notify RecyclerView
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        Toast.makeText(context, "Failed to delete job. Try again.", Toast.LENGTH_SHORT).show();
-                                    });
-                        });
-
-                        // Set Apply button visibility
-                        holder.applyButton.setVisibility(View.VISIBLE);
-                        holder.applyButton.setOnClickListener(v -> {
-                            Application jobApplication = new Application(job.getJobId(), currentUserId, System.currentTimeMillis(), "Pending");
-                            db.collection("applications").add(jobApplication)
-                                    .addOnSuccessListener(documentReference -> {
-                                        Toast.makeText(context, "Successfully applied for the job!", Toast.LENGTH_SHORT).show();
-                                        jobList.remove(position);  // Remove the applied job from the list
-                                        notifyItemRemoved(position);
+                            holder.settingsButton.setOnClickListener(v -> {
+                                PopupMenu popup = new PopupMenu(context, holder.settingsButton);
+                                popup.getMenuInflater().inflate(R.menu.job_options_menu, popup.getMenu());
+                                popup.setOnMenuItemClickListener(item -> {
+                                    if (item.getItemId() == R.id.menu_edit) {
+                                        Intent intent = new Intent(context, EditJobActivity.class);
+                                        intent.putExtra("jobId", job.getJobId());
+                                        context.startActivity(intent);
+                                        return true;
+                                    } else if (item.getItemId() == R.id.menu_delete) {
                                         db.collection("jobs").document(job.getJobId())
                                                 .delete()
                                                 .addOnSuccessListener(aVoid -> {
                                                     Toast.makeText(context, "Job deleted successfully!", Toast.LENGTH_SHORT).show();
-                                                    jobList.remove(position);  // Remove from list
-                                                    notifyItemRemoved(position); // Notify RecyclerView
+                                                    jobList.remove(position);
+                                                    notifyItemRemoved(position);
                                                 })
                                                 .addOnFailureListener(e -> {
                                                     Toast.makeText(context, "Failed to delete job. Try again.", Toast.LENGTH_SHORT).show();
                                                 });
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        Toast.makeText(context, "Failed to apply. Try again.", Toast.LENGTH_SHORT).show();
-                                    });
-                        });
+                                        return true;
+                                    }
+                                    return false;
+                                });
+                                popup.show();
+                            });
+                        } else {
+                            // Job is not mine: Show small Apply and Chat buttons
+                            holder.settingsButton.setVisibility(View.GONE);
+                            holder.applyButton.setVisibility(View.VISIBLE);
+                            holder.chatButton.setVisibility(View.VISIBLE);
+
+                            holder.chatButton.setOnClickListener(v -> {
+                                String jobPosterId = job.getUserId();
+                                if (!currentUserId.equals(jobPosterId)) {
+                                    Intent intent = new Intent(context, ChatActivity.class);
+                                    intent.putExtra("receiverId", jobPosterId);
+                                    context.startActivity(intent);
+                                } else {
+                                    Toast.makeText(context, "You cannot chat with yourself", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+
+                            holder.applyButton.setOnClickListener(v -> {
+                                Application jobApplication = new Application(job.getJobId(), currentUserId, System.currentTimeMillis(), "Pending");
+                                db.collection("applications").add(jobApplication)
+                                        .addOnSuccessListener(documentReference -> {
+                                            Toast.makeText(context, "Successfully applied for the job!", Toast.LENGTH_SHORT).show();
+                                            jobList.remove(position);
+                                            notifyItemRemoved(position);
+                                            db.collection("jobs").document(job.getJobId())
+                                                    .delete()
+                                                    .addOnSuccessListener(aVoid -> {
+                                                        Toast.makeText(context, "Job deleted successfully!", Toast.LENGTH_SHORT).show();
+                                                    })
+                                                    .addOnFailureListener(e -> {
+                                                        Toast.makeText(context, "Failed to delete job.", Toast.LENGTH_SHORT).show();
+                                                    });
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            Toast.makeText(context, "Failed to apply. Try again.", Toast.LENGTH_SHORT).show();
+                                        });
+                            });
+                        }
                     } else {
-                        // If the user has already applied, remove the job from the list
+                        // User has already applied: Hide the item
                         jobList.remove(position);
-                        notifyItemRemoved(position);  // Remove the job from RecyclerView
+                        notifyItemRemoved(position);
                     }
                 });
     }
-
-
 
     @Override
     public int getItemCount() {
@@ -218,7 +222,8 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
     public static class JobViewHolder extends RecyclerView.ViewHolder {
         TextView jobTitle, jobCategory, jobDescription;
         ImageView jobCategoryImage;
-        Button applyButton, chatButton, editButton, deleteButton;
+        Button applyButton, chatButton;
+        ImageButton settingsButton;
 
         public JobViewHolder(View itemView) {
             super(itemView);
@@ -228,8 +233,7 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
             jobCategoryImage = itemView.findViewById(R.id.jobCategoryImage);
             applyButton = itemView.findViewById(R.id.applyButton);
             chatButton = itemView.findViewById(R.id.chatButton);
-            editButton = itemView.findViewById(R.id.editButton);
-            deleteButton = itemView.findViewById(R.id.deleteButton);
+            settingsButton = itemView.findViewById(R.id.settingsButton);
         }
     }
 }
