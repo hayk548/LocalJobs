@@ -116,6 +116,7 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
                                 if (!currentUserId.equals(jobPosterId)) {
                                     Intent intent = new Intent(context, ChatActivity.class);
                                     intent.putExtra("receiverId", jobPosterId);
+                                    intent.putExtra("jobId", job.getJobId()); // Pass jobId
                                     context.startActivity(intent);
                                 } else {
                                     Toast.makeText(context, "You cannot chat with yourself", Toast.LENGTH_SHORT).show();

@@ -57,8 +57,7 @@ public class ChatsActivity extends AppCompatActivity {
 
         chatUsers = new ArrayList<>();
         filteredChatUsers = new ArrayList<>();
-        chatListAdapter = new ChatListAdapter(this, filteredChatUsers, this::startChatActivity);
-        chatsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        chatListAdapter = new ChatListAdapter(this, filteredChatUsers, (receiverId) -> startChatActivity(receiverId, null));        chatsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         chatsRecyclerView.setAdapter(chatListAdapter);
 
         loadChats();
@@ -69,6 +68,15 @@ public class ChatsActivity extends AppCompatActivity {
         postJobButton.setOnClickListener(v -> navigateTo(PostJobActivity.class));
         accountButton.setOnClickListener(v -> navigateTo(AccountActivity.class));
         openMapButton.setOnClickListener(v -> navigateTo(MapsActivity2.class));
+    }
+
+    private void startChatActivity(String receiverId, String jobId) { // Add jobId parameter
+        Intent intent = new Intent(ChatsActivity.this, ChatActivity.class);
+        intent.putExtra("receiverId", receiverId);
+        if (jobId != null) {
+            intent.putExtra("jobId", jobId);
+        }
+        startActivity(intent);
     }
 
     private void loadChats() {
@@ -158,12 +166,6 @@ public class ChatsActivity extends AppCompatActivity {
             }
         }
         chatListAdapter.notifyDataSetChanged();
-    }
-
-    private void startChatActivity(String receiverId) {
-        Intent intent = new Intent(ChatsActivity.this, ChatActivity.class);
-        intent.putExtra("receiverId", receiverId);
-        startActivity(intent);
     }
 
     private void navigateTo(Class<?> targetActivity) {

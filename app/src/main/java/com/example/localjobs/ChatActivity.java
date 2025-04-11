@@ -1,25 +1,36 @@
 package com.example.localjobs;
 
+import android.app.Dialog;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.CircleCrop;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.Query;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -31,12 +42,13 @@ public class ChatActivity extends AppCompatActivity {
     private RecyclerView recyclerChat;
     private EditText editMessage;
     private ImageView buttonSend;
-    private TextView typingIndicator;
+    private TextView typingIndicator, creatorInfoTextView;
+    private ImageButton backButton, menuButton;
     private List<ChatMessage> chatMessages;
     private ChatAdapter chatAdapter;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
-    private String senderId, receiverId;
+    private String senderId, receiverId, jobId;
     private String chatId;
     private ListenerRegistration messagesListener;
     private ListenerRegistration typingListener;
@@ -51,16 +63,21 @@ public class ChatActivity extends AppCompatActivity {
             window.setStatusBarColor(getResources().getColor(R.color.light_blue));
         }
 
+        // Initialize views
         recyclerChat = findViewById(R.id.recyclerChat);
         editMessage = findViewById(R.id.editMessage);
         buttonSend = findViewById(R.id.buttonSend);
         typingIndicator = findViewById(R.id.typingIndicator);
+        creatorInfoTextView = findViewById(R.id.creatorInfoTextView);
+        backButton = findViewById(R.id.backButton);
+        menuButton = findViewById(R.id.menuButton);
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
 
         senderId = mAuth.getCurrentUser().getUid();
         receiverId = getIntent().getStringExtra("receiverId");
+        jobId = getIntent().getStringExtra("jobId"); // May be null if from ChatsActivity
 
         if (senderId == null || receiverId == null) {
             Log.e("ChatActivity", "Error: User ID is null");
@@ -76,10 +93,103 @@ public class ChatActivity extends AppCompatActivity {
         recyclerChat.setLayoutManager(new LinearLayoutManager(this));
         recyclerChat.setAdapter(chatAdapter);
 
-        initializeChatIfNeeded();
+        // Set up UI actions
+        backButton.setOnClickListener(v -> finish());
+        menuButton.setOnClickListener(v -> showCreatorInfoPopup());
         buttonSend.setOnClickListener(v -> sendMessage());
+
+        initializeChatIfNeeded();
         setupTypingIndicator();
         loadMessages();
+        fetchCreatorAndJobInfo();
+    }
+
+    private void fetchCreatorAndJobInfo() {
+        // Fetch receiver's username
+        db.collection("users").document(receiverId)
+                .get()
+                .addOnSuccessListener(userSnapshot -> {
+                    String username = userSnapshot.exists() ? userSnapshot.getString("username") : "Unknown User";
+                    if (username == null) username = "Unknown User";
+
+                    if (jobId != null) {
+                        // Fetch job title if jobId is provided
+                        String finalUsername = username;
+                        String finalUsername1 = username;
+                        db.collection("jobs").document(jobId)
+                                .get()
+                                .addOnSuccessListener(jobSnapshot -> {
+                                    if (jobSnapshot.exists()) {
+                                        String jobTitle = jobSnapshot.getString("title");
+                                        creatorInfoTextView.setText(finalUsername + " - " + (jobTitle != null ? jobTitle : "Unknown Job"));
+                                    } else {
+                                        creatorInfoTextView.setText(finalUsername + " - No Job Context");
+                                    }
+                                })
+                                .addOnFailureListener(e -> {
+                                    Log.e("ChatActivity", "Failed to fetch job", e);
+                                    creatorInfoTextView.setText(finalUsername1 + " - Error");
+                                });
+                    } else {
+                        creatorInfoTextView.setText(username); // No job context
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("ChatActivity", "Failed to fetch user", e);
+                    creatorInfoTextView.setText("Error Loading Info");
+                });
+    }
+
+    private void showCreatorInfoPopup() {
+        Dialog dialog = new Dialog(this);
+        dialog.setContentView(R.layout.layout_creator_info);
+
+        ImageView creatorImage = dialog.findViewById(R.id.creatorImage);
+        TextView creatorUsername = dialog.findViewById(R.id.creatorUsername);
+        TextView creatorEmail = dialog.findViewById(R.id.creatorEmail);
+        ImageButton closeButton = dialog.findViewById(R.id.closeButton);
+
+        // Fetch creator details
+        db.collection("users").document(receiverId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        String username = documentSnapshot.getString("username");
+                        String profileImage = documentSnapshot.getString("profileImage");
+
+                        creatorUsername.setText(username != null ? username : "Unknown User");
+                        creatorEmail.setText(mAuth.getCurrentUser().getEmail()); // Use receiver's email if available via Auth
+
+                        if (profileImage != null && !profileImage.isEmpty()) {
+                            try {
+                                byte[] decodedString = Base64.decode(profileImage, Base64.DEFAULT);
+                                Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                                Glide.with(this)
+                                        .load(decodedByte)
+                                        .transform(new CircleCrop())
+                                        .into(creatorImage);
+                            } catch (Exception e) {
+                                Log.e("ChatActivity", "Error loading profile image", e);
+                                creatorImage.setImageResource(R.drawable.profile_picture);
+                            }
+                        } else {
+                            creatorImage.setImageResource(R.drawable.profile_picture);
+                        }
+                    } else {
+                        creatorUsername.setText("Unknown User");
+                        creatorEmail.setText("No email available");
+                        creatorImage.setImageResource(R.drawable.profile_picture);
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("ChatActivity", "Failed to fetch creator info", e);
+                    creatorUsername.setText("Error");
+                    creatorEmail.setText("Error");
+                    creatorImage.setImageResource(R.drawable.profile_picture);
+                });
+
+        closeButton.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     private void initializeChatIfNeeded() {
@@ -90,6 +200,9 @@ public class ChatActivity extends AppCompatActivity {
                 chatData.put("users", Arrays.asList(senderId, receiverId));
                 chatData.put("lastMessage", "");
                 chatData.put("timestamp", new Date().getTime());
+                if (jobId != null) {
+                    chatData.put("jobId", jobId); // Optional: Store jobId in chat metadata
+                }
 
                 chatRef.set(chatData)
                         .addOnFailureListener(e -> Log.e("ChatActivity", "Failed to initialize chat", e));
@@ -139,7 +252,7 @@ public class ChatActivity extends AppCompatActivity {
                             }
                         }
                         chatAdapter.notifyDataSetChanged();
-                        if (!chatMessages.isEmpty()) { // Prevent invalid scroll
+                        if (!chatMessages.isEmpty()) {
                             recyclerChat.smoothScrollToPosition(chatMessages.size() - 1);
                         }
                     }
@@ -191,6 +304,9 @@ public class ChatActivity extends AppCompatActivity {
         metadata.put("users", Arrays.asList(senderId, receiverId));
         metadata.put("lastMessage", lastMessage);
         metadata.put("timestamp", new Date().getTime());
+        if (jobId != null) {
+            metadata.put("jobId", jobId); // Optional: Update jobId in metadata
+        }
 
         db.collection("chats")
                 .document(chatId)
