@@ -20,7 +20,11 @@ import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.SetOptions;
+import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -54,6 +58,20 @@ public class MainActivity extends AppCompatActivity {
 
         loadRememberedUser();
         FirebaseApp.initializeApp(this);
+
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                String token = task.getResult();
+                String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+                FirebaseFirestore db = FirebaseFirestore.getInstance();
+                db.collection("users").document(userId)
+                        .set(new HashMap<String, Object>() {{
+                            put("fcmToken", token);
+                        }}, SetOptions.merge())
+                        .addOnSuccessListener(aVoid -> Log.d("FCM", "Token saved"))
+                        .addOnFailureListener(e -> Log.w("FCM", "Token save failed", e));
+            }
+        });
 
         loginButton.setOnClickListener(new View.OnClickListener() {
             @Override

@@ -1,5 +1,5 @@
 [versions]
-agp = "8.8.1"
+agp = "8.9.1"
 androidImageCropper = "4.5.0"
 converterGson = "2.9.0"
 firebaseAppcheck = "16.0.0"

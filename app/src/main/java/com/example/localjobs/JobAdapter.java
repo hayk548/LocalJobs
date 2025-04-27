@@ -124,7 +124,15 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
                             });
 
                             holder.applyButton.setOnClickListener(v -> {
-                                Application jobApplication = new Application(job.getJobId(), currentUserId, System.currentTimeMillis(), "Pending");
+                                // Include jobTitle and creatorId in Application
+                                Application jobApplication = new Application(
+                                        job.getJobId(),
+                                        currentUserId,
+                                        System.currentTimeMillis(),
+                                        "Pending",
+                                        job.getTitle(),
+                                        job.getUserId()
+                                );
                                 db.collection("applications").add(jobApplication)
                                         .addOnSuccessListener(documentReference -> {
                                             Toast.makeText(context, "Successfully applied for the job!", Toast.LENGTH_SHORT).show();
