@@ -43,6 +43,7 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+    implementation(libs.firebase.functions)
     implementation(libs.firebase.storage)
     implementation(libs.recyclerview)
     implementation(libs.glide)

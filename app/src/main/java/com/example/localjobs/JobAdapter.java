@@ -3,6 +3,7 @@ package com.example.localjobs;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
 import android.view.View;
@@ -17,18 +18,25 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.functions.FirebaseFunctions;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
 
+    private static final String TAG = "JobAdapter";
     private List<Job> jobList;
     private Context context;
     private FirebaseFirestore db;
+    private FirebaseFunctions functions;
 
     public JobAdapter(List<Job> jobList, Context context) {
         this.jobList = jobList;
         this.context = context;
         this.db = FirebaseFirestore.getInstance();
+        // Specify the region where your Cloud Function is deployed (e.g., "us-central1")
+        this.functions = FirebaseFunctions.getInstance("us-central1"); // Change to your region if different
     }
 
     @Override
@@ -53,6 +61,7 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
         holder.jobTitle.setText(job.getTitle());
         holder.jobCategory.setText(job.getCategory());
         holder.jobDescription.setText(job.getDescription());
+        holder.jobLocation.setText(job.getLocation() != null ? job.getLocation() : "Unknown Location");
         int categoryImageResId = getCategoryImage(job.getCategory());
         holder.jobCategoryImage.setImageResource(categoryImageResId);
 
@@ -116,7 +125,7 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
                                 if (!currentUserId.equals(jobPosterId)) {
                                     Intent intent = new Intent(context, ChatActivity.class);
                                     intent.putExtra("receiverId", jobPosterId);
-                                    intent.putExtra("jobId", job.getJobId()); // Pass jobId
+                                    intent.putExtra("jobId", job.getJobId());
                                     context.startActivity(intent);
                                 } else {
                                     Toast.makeText(context, "You cannot chat with yourself", Toast.LENGTH_SHORT).show();
@@ -124,31 +133,82 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
                             });
 
                             holder.applyButton.setOnClickListener(v -> {
-                                // Include jobTitle and creatorId in Application
-                                Application jobApplication = new Application(
-                                        job.getJobId(),
-                                        currentUserId,
-                                        System.currentTimeMillis(),
-                                        "Pending",
-                                        job.getTitle(),
-                                        job.getUserId()
-                                );
-                                db.collection("applications").add(jobApplication)
-                                        .addOnSuccessListener(documentReference -> {
-                                            Toast.makeText(context, "Successfully applied for the job!", Toast.LENGTH_SHORT).show();
-                                            jobList.remove(position);
-                                            notifyItemRemoved(position);
-                                            db.collection("jobs").document(job.getJobId())
-                                                    .delete()
-                                                    .addOnSuccessListener(aVoid -> {
-                                                        Toast.makeText(context, "Job deleted successfully!", Toast.LENGTH_SHORT).show();
-                                                    })
-                                                    .addOnFailureListener(e -> {
-                                                        Toast.makeText(context, "Failed to delete job.", Toast.LENGTH_SHORT).show();
-                                                    });
+                                // Fetch applicant details from Firestore
+                                db.collection("users").document(currentUserId).get()
+                                        .addOnSuccessListener(documentSnapshot -> {
+                                            if (documentSnapshot.exists()) {
+                                                // Get username from User class
+                                                User applicant = documentSnapshot.toObject(User.class);
+                                                String applicantUsername = applicant != null && applicant.getUsername() != null ? applicant.getUsername() : "Unknown";
+                                                // Get email from FirebaseAuth
+                                                String applicantEmail = currentUser != null && currentUser.getEmail() != null ? currentUser.getEmail() : "Unknown";
+
+                                                // Fetch job creator's FCM token
+                                                db.collection("users").document(job.getUserId()).get()
+                                                        .addOnSuccessListener(creatorSnapshot -> {
+                                                            if (creatorSnapshot.exists()) {
+                                                                String creatorFcmToken = creatorSnapshot.getString("fcmToken");
+                                                                if (creatorFcmToken != null && !creatorFcmToken.isEmpty()) {
+                                                                    // Proceed with application logic first
+                                                                    Application jobApplication = new Application(
+                                                                            job.getJobId(),
+                                                                            currentUserId,
+                                                                            System.currentTimeMillis(),
+                                                                            "Pending",
+                                                                            job.getTitle(),
+                                                                            job.getUserId()
+                                                                    );
+                                                                    db.collection("applications").add(jobApplication)
+                                                                            .addOnSuccessListener(documentReference -> {
+                                                                                Toast.makeText(context, "Successfully applied for the job!", Toast.LENGTH_SHORT).show();
+                                                                                // Send notification to job creator
+                                                                                sendNotificationToCreator(
+                                                                                        creatorFcmToken,
+                                                                                        job.getTitle(),
+                                                                                        applicantUsername,
+                                                                                        applicantEmail,
+                                                                                        job.getJobId()
+                                                                                );
+                                                                                // Remove job from list
+                                                                                jobList.remove(position);
+                                                                                notifyItemRemoved(position);
+                                                                                // Comment out job deletion to allow multiple applicants
+                                                                                /*
+                                                                                db.collection("jobs").document(job.getJobId())
+                                                                                        .delete()
+                                                                                        .addOnSuccessListener(aVoid -> {
+                                                                                            Toast.makeText(context, "Job deleted successfully!", Toast.LENGTH_SHORT).show();
+                                                                                        })
+                                                                                        .addOnFailureListener(e -> {
+                                                                                            Toast.makeText(context, "Failed to delete job: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                                                        });
+                                                                                */
+                                                                            })
+                                                                            .addOnFailureListener(e -> {
+                                                                                Toast.makeText(context, "Failed to apply: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                                                Log.e(TAG, "Failed to save application", e);
+                                                                            });
+                                                                } else {
+                                                                    Toast.makeText(context, "Job creator's notification token not found.", Toast.LENGTH_SHORT).show();
+                                                                    Log.w(TAG, "FCM token missing for user: " + job.getUserId());
+                                                                }
+                                                            } else {
+                                                                Toast.makeText(context, "Job creator not found.", Toast.LENGTH_SHORT).show();
+                                                                Log.w(TAG, "Creator document missing for user: " + job.getUserId());
+                                                            }
+                                                        })
+                                                        .addOnFailureListener(e -> {
+                                                            Toast.makeText(context, "Error fetching job creator: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                                            Log.e(TAG, "Failed to fetch creator document", e);
+                                                        });
+                                            } else {
+                                                Toast.makeText(context, "Failed to fetch applicant details.", Toast.LENGTH_SHORT).show();
+                                                Log.w(TAG, "Applicant document missing for user: " + currentUserId);
+                                            }
                                         })
                                         .addOnFailureListener(e -> {
-                                            Toast.makeText(context, "Failed to apply. Try again.", Toast.LENGTH_SHORT).show();
+                                            Toast.makeText(context, "Error fetching applicant: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                                            Log.e(TAG, "Failed to fetch applicant document", e);
                                         });
                             });
                         }
@@ -157,6 +217,27 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
                         jobList.remove(position);
                         notifyItemRemoved(position);
                     }
+                });
+    }
+
+    private void sendNotificationToCreator(String creatorFcmToken, String jobTitle, String applicantUsername, String applicantEmail, String jobId) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("token", creatorFcmToken);
+        data.put("title", "New Application for " + jobTitle);
+        data.put("body", applicantUsername + " (" + applicantEmail + ") has applied for your job.");
+        data.put("jobId", jobId);
+
+        Log.d(TAG, "Sending notification to token: " + creatorFcmToken + " for job: " + jobId);
+
+        functions.getHttpsCallable("sendNotification")
+                .call(data)
+                .addOnSuccessListener(httpsCallableResult -> {
+                    Log.d(TAG, "Notification sent successfully for job: " + jobId);
+                    Toast.makeText(context, "Notification sent to job creator.", Toast.LENGTH_SHORT).show();
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(context, "Failed to send notification: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    Log.e(TAG, "Failed to send notification for job: " + jobId, e);
                 });
     }
 
@@ -239,7 +320,7 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
     }
 
     public static class JobViewHolder extends RecyclerView.ViewHolder {
-        TextView jobTitle, jobCategory, jobDescription;
+        TextView jobTitle, jobCategory, jobDescription, jobLocation;
         ImageView jobCategoryImage;
         Button applyButton, chatButton;
         ImageButton settingsButton;
@@ -249,6 +330,7 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
             jobTitle = itemView.findViewById(R.id.jobTitle);
             jobCategory = itemView.findViewById(R.id.jobCategory);
             jobDescription = itemView.findViewById(R.id.jobDescription);
+            jobLocation = itemView.findViewById(R.id.jobLocation);
             jobCategoryImage = itemView.findViewById(R.id.jobCategoryImage);
             applyButton = itemView.findViewById(R.id.applyButton);
             chatButton = itemView.findViewById(R.id.chatButton);

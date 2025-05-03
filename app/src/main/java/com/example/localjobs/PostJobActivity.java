@@ -107,7 +107,7 @@ public class PostJobActivity extends AppCompatActivity {
         String date = jobDate.getText().toString().trim();
         String category = jobCategorySpinner.getSelectedItem().toString();
 
-        if (title.isEmpty() || description.isEmpty() || location.isEmpty() || date.isEmpty() || category.equals("Select Category")) {
+        if (title.isEmpty() || description.isEmpty() || location.isEmpty() || date.isEmpty() || category.equals("All")) {
             Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show();
             return;
         }

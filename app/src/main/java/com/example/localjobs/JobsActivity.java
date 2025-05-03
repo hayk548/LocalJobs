@@ -3,7 +3,6 @@ package com.example.localjobs;
 import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Location;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.Editable;
@@ -11,16 +10,21 @@ import android.text.TextWatcher;
 import android.view.View;
 import android.view.Window;
 import android.widget.AdapterView;
-import android.widget.Button;
+import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.Spinner;
-import android.widget.ArrayAdapter;
+import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationServices;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -42,6 +46,7 @@ public class JobsActivity extends AppCompatActivity {
     private static final int LOCATION_PERMISSION_REQUEST = 1;
     private EditText searchBar;
     private Spinner filterSpinner;
+    private ActivityResultLauncher<String> requestPermissionLauncher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +73,17 @@ public class JobsActivity extends AppCompatActivity {
         jobsRecyclerView.setAdapter(jobAdapter);
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        // Initialize permission launcher for notifications
+        requestPermissionLauncher = registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+            if (!isGranted) {
+                Toast.makeText(this, "Notifications disabled. You may miss job application updates.", Toast.LENGTH_LONG).show();
+            }
+        });
+
+        // Request notification permission for Android 13+
+        requestNotificationPermission();
+
         getUserLocation();
 
         postJobButton.setOnClickListener(v -> startActivity(new Intent(JobsActivity.this, PostJobActivity.class)));
@@ -114,6 +130,14 @@ public class JobsActivity extends AppCompatActivity {
                 R.array.job_categories, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         filterSpinner.setAdapter(adapter);
+    }
+
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS);
+            }
+        }
     }
 
     @Override

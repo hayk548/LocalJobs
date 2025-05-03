@@ -12,27 +12,24 @@ import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.google.android.gms.tasks.OnCompleteListener;
-import com.google.android.gms.tasks.Task;
 import com.google.firebase.FirebaseApp;
-import com.google.firebase.auth.AuthResult;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.SetOptions;
 import com.google.firebase.messaging.FirebaseMessaging;
-import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.HashMap;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "MainActivity";
     private EditText email, password;
     private Button loginButton, signupButton;
     private CheckBox rememberMeCheckbox;
     private FirebaseAuth mAuth;
-    private String userId;
     private FirebaseFirestore db;
     private SharedPreferences sharedPreferences;
 
@@ -43,7 +40,7 @@ public class MainActivity extends AppCompatActivity {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             Window window = getWindow();
-            window.setStatusBarColor(getResources().getColor(R.color.light_blue)); // Set status bar color
+            window.setStatusBarColor(getResources().getColor(R.color.light_blue));
         }
 
         email = findViewById(R.id.email);
@@ -56,36 +53,13 @@ public class MainActivity extends AppCompatActivity {
         db = FirebaseFirestore.getInstance();
         sharedPreferences = getSharedPreferences("UserPrefs", MODE_PRIVATE);
 
-        loadRememberedUser();
         FirebaseApp.initializeApp(this);
 
-        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
-            if (task.isSuccessful()) {
-                String token = task.getResult();
-                String userId = FirebaseAuth.getInstance().getCurrentUser().getUid();
-                FirebaseFirestore db = FirebaseFirestore.getInstance();
-                db.collection("users").document(userId)
-                        .set(new HashMap<String, Object>() {{
-                            put("fcmToken", token);
-                        }}, SetOptions.merge())
-                        .addOnSuccessListener(aVoid -> Log.d("FCM", "Token saved"))
-                        .addOnFailureListener(e -> Log.w("FCM", "Token save failed", e));
-            }
-        });
+        loadRememberedUser();
 
-        loginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                loginUser();
-            }
-        });
+        loginButton.setOnClickListener(v -> loginUser());
 
-        signupButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(new Intent(MainActivity.this, SignUpActivity.class));
-            }
-        });
+        signupButton.setOnClickListener(v -> startActivity(new Intent(MainActivity.this, SignUpActivity.class)));
     }
 
     private void loginUser() {
@@ -106,33 +80,50 @@ public class MainActivity extends AppCompatActivity {
         }
 
         mAuth.signInWithEmailAndPassword(userEmail, userPassword)
-                .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
-                    @Override
-                    public void onComplete(@NonNull Task<AuthResult> task) {
-                        if (task.isSuccessful()) {
+                .addOnCompleteListener(this, task -> {
+                    if (task.isSuccessful()) {
+                        FirebaseUser user = mAuth.getCurrentUser();
+                        if (user != null) {
+                            String userId = user.getUid();
                             Toast.makeText(MainActivity.this, "Login Successful", Toast.LENGTH_SHORT).show();
-                            userId = mAuth.getCurrentUser().getUid();
+                            saveFcmToken(user);
                             db.collection("users").document(userId).get()
                                     .addOnSuccessListener(documentSnapshot -> {
-                                        if (documentSnapshot.exists()) {
-                                            Intent intent = new Intent(MainActivity.this, JobsActivity.class);
-                                            startActivity(intent);
-                                            finish();
-                                        } else {
+                                        if (!documentSnapshot.exists()) {
                                             createUserDocument(userId, userEmail);
-                                            Intent intent = new Intent(MainActivity.this, JobsActivity.class);
-                                            startActivity(intent);
-                                            finish();
                                         }
+                                        startActivity(new Intent(MainActivity.this, JobsActivity.class));
+                                        finish();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        Log.e(TAG, "Failed to check user document: " + e.getMessage());
+                                        Toast.makeText(MainActivity.this, "Error checking user data: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                                     });
-                            Intent intent = new Intent(MainActivity.this, JobsActivity.class);
-                            startActivity(intent);
-                            finish();
                         } else {
-                            Toast.makeText(MainActivity.this, "Login Failed: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
+                            Toast.makeText(MainActivity.this, "Login failed: User is null", Toast.LENGTH_SHORT).show();
                         }
+                    } else {
+                        Toast.makeText(MainActivity.this, "Login Failed: " + task.getException().getMessage(), Toast.LENGTH_LONG).show();
+                        Log.e(TAG, "Login failed", task.getException());
                     }
                 });
+    }
+
+    private void saveFcmToken(FirebaseUser user) {
+        FirebaseMessaging.getInstance().getToken().addOnCompleteListener(task -> {
+            if (task.isSuccessful() && task.getResult() != null) {
+                String token = task.getResult();
+                String userId = user.getUid();
+                db.collection("users").document(userId)
+                        .set(new HashMap<String, Object>() {{
+                            put("fcmToken", token);
+                        }}, SetOptions.merge())
+                        .addOnSuccessListener(aVoid -> Log.d(TAG, "FCM token saved for user: " + userId))
+                        .addOnFailureListener(e -> Log.w(TAG, "Failed to save FCM token: " + e.getMessage(), e));
+            } else {
+                Log.w(TAG, "Failed to get FCM token", task.getException());
+            }
+        });
     }
 
     private void saveUserEmail(String email) {
@@ -146,6 +137,7 @@ public class MainActivity extends AppCompatActivity {
         editor.remove("savedEmail");
         editor.apply();
     }
+
     private void saveUserPassword(String password) {
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString("savedPassword", password);
@@ -167,20 +159,20 @@ public class MainActivity extends AppCompatActivity {
             rememberMeCheckbox.setChecked(true);
         }
     }
+
     private void createUserDocument(String userId, String email) {
         User newUser = new User(userId, email, "");
-        Log.d("MainActivity", "Creating user document for " + userId);
+        Log.d(TAG, "Creating user document for " + userId);
 
         db.collection("users").document(userId)
                 .set(newUser)
                 .addOnSuccessListener(aVoid -> {
-                    Log.d("MainActivity", "User document created successfully.");
+                    Log.d(TAG, "User document created successfully");
                     Toast.makeText(MainActivity.this, "User document created", Toast.LENGTH_SHORT).show();
                 })
                 .addOnFailureListener(e -> {
-                    Log.e("MainActivity", "Error creating user document: " + e.getMessage());
+                    Log.e(TAG, "Error creating user document: " + e.getMessage());
                     Toast.makeText(MainActivity.this, "Error creating user document: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                 });
     }
-
 }
