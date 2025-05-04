@@ -48,7 +48,7 @@ public class ChatActivity extends AppCompatActivity {
     private ChatAdapter chatAdapter;
     private FirebaseAuth mAuth;
     private FirebaseFirestore db;
-    private String senderId, receiverId, jobId;
+    private String senderId, receiverId, jobId, jobTitle;
     private String chatId;
     private ListenerRegistration messagesListener;
     private ListenerRegistration typingListener;
@@ -63,7 +63,6 @@ public class ChatActivity extends AppCompatActivity {
             window.setStatusBarColor(getResources().getColor(R.color.light_blue));
         }
 
-        // Initialize views
         recyclerChat = findViewById(R.id.recyclerChat);
         editMessage = findViewById(R.id.editMessage);
         buttonSend = findViewById(R.id.buttonSend);
@@ -77,7 +76,8 @@ public class ChatActivity extends AppCompatActivity {
 
         senderId = mAuth.getCurrentUser().getUid();
         receiverId = getIntent().getStringExtra("receiverId");
-        jobId = getIntent().getStringExtra("jobId"); // May be null if from ChatsActivity
+        jobId = getIntent().getStringExtra("jobId");
+        jobTitle = getIntent().getStringExtra("jobTitle");
 
         if (senderId == null || receiverId == null) {
             Log.e("ChatActivity", "Error: User ID is null");
@@ -93,7 +93,6 @@ public class ChatActivity extends AppCompatActivity {
         recyclerChat.setLayoutManager(new LinearLayoutManager(this));
         recyclerChat.setAdapter(chatAdapter);
 
-        // Set up UI actions
         backButton.setOnClickListener(v -> finish());
         menuButton.setOnClickListener(v -> showCreatorInfoPopup());
         buttonSend.setOnClickListener(v -> sendMessage());
@@ -105,39 +104,43 @@ public class ChatActivity extends AppCompatActivity {
     }
 
     private void fetchCreatorAndJobInfo() {
-        // Fetch receiver's username
-        db.collection("users").document(receiverId)
-                .get()
-                .addOnSuccessListener(userSnapshot -> {
-                    String username = userSnapshot.exists() ? userSnapshot.getString("username") : "Unknown User";
-                    if (username == null) username = "Unknown User";
+        DocumentReference chatRef = db.collection("chats").document(chatId);
+        chatRef.get().addOnSuccessListener(chatSnapshot -> {
+            String storedJobTitle = chatSnapshot.exists() ? chatSnapshot.getString("jobTitle") : null;
+            if (storedJobTitle != null) {
+                jobTitle = storedJobTitle; // Use stored jobTitle if available
+            } else if (jobId != null && jobTitle == null) {
+                // Fetch jobTitle from jobs collection if not passed and not stored
+                db.collection("jobs").document(jobId)
+                        .get()
+                        .addOnSuccessListener(jobSnapshot -> {
+                            if (jobSnapshot.exists()) {
+                                jobTitle = jobSnapshot.getString("title");
+                                // Update Firestore with fetched jobTitle
+                                if (jobTitle != null) {
+                                    chatRef.update("jobTitle", jobTitle)
+                                            .addOnFailureListener(e -> Log.e("ChatActivity", "Failed to update jobTitle", e));
+                                }
+                            }
+                        })
+                        .addOnFailureListener(e -> Log.e("ChatActivity", "Failed to fetch job", e));
+            }
 
-                    if (jobId != null) {
-                        // Fetch job title if jobId is provided
-                        String finalUsername = username;
-                        String finalUsername1 = username;
-                        db.collection("jobs").document(jobId)
-                                .get()
-                                .addOnSuccessListener(jobSnapshot -> {
-                                    if (jobSnapshot.exists()) {
-                                        String jobTitle = jobSnapshot.getString("title");
-                                        creatorInfoTextView.setText(finalUsername + " - " + (jobTitle != null ? jobTitle : "Unknown Job"));
-                                    } else {
-                                        creatorInfoTextView.setText(finalUsername + " - No Job Context");
-                                    }
-                                })
-                                .addOnFailureListener(e -> {
-                                    Log.e("ChatActivity", "Failed to fetch job", e);
-                                    creatorInfoTextView.setText(finalUsername1 + " - Error");
-                                });
-                    } else {
-                        creatorInfoTextView.setText(username); // No job context
-                    }
-                })
-                .addOnFailureListener(e -> {
-                    Log.e("ChatActivity", "Failed to fetch user", e);
-                    creatorInfoTextView.setText("Error Loading Info");
-                });
+            db.collection("users").document(receiverId)
+                    .get()
+                    .addOnSuccessListener(userSnapshot -> {
+                        String username = userSnapshot.exists() ? userSnapshot.getString("username") : "Unknown User";
+                        if (username == null) username = "Unknown User";
+                        creatorInfoTextView.setText(username + (jobTitle != null ? " - " + jobTitle : ""));
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e("ChatActivity", "Failed to fetch user", e);
+                        creatorInfoTextView.setText("Error Loading Info");
+                    });
+        }).addOnFailureListener(e -> {
+            Log.e("ChatActivity", "Failed to fetch chat", e);
+            creatorInfoTextView.setText("Error Loading Info");
+        });
     }
 
     private void showCreatorInfoPopup() {
@@ -149,7 +152,6 @@ public class ChatActivity extends AppCompatActivity {
         TextView creatorEmail = dialog.findViewById(R.id.creatorEmail);
         ImageButton closeButton = dialog.findViewById(R.id.closeButton);
 
-        // Fetch creator details
         db.collection("users").document(receiverId)
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
@@ -158,7 +160,7 @@ public class ChatActivity extends AppCompatActivity {
                         String profileImage = documentSnapshot.getString("profileImage");
 
                         creatorUsername.setText(username != null ? username : "Unknown User");
-                        creatorEmail.setText(mAuth.getCurrentUser().getEmail()); // Use receiver's email if available via Auth
+                        creatorEmail.setText(mAuth.getCurrentUser().getEmail());
 
                         if (profileImage != null && !profileImage.isEmpty()) {
                             try {
@@ -195,17 +197,43 @@ public class ChatActivity extends AppCompatActivity {
     private void initializeChatIfNeeded() {
         DocumentReference chatRef = db.collection("chats").document(chatId);
         chatRef.get().addOnCompleteListener(task -> {
-            if (task.isSuccessful() && !task.getResult().exists()) {
-                Map<String, Object> chatData = new HashMap<>();
-                chatData.put("users", Arrays.asList(senderId, receiverId));
-                chatData.put("lastMessage", "");
-                chatData.put("timestamp", new Date().getTime());
-                if (jobId != null) {
-                    chatData.put("jobId", jobId); // Optional: Store jobId in chat metadata
-                }
+            if (task.isSuccessful()) {
+                DocumentSnapshot snapshot = task.getResult();
+                if (!snapshot.exists()) {
+                    Map<String, Object> chatData = new HashMap<>();
+                    chatData.put("users", Arrays.asList(senderId, receiverId));
+                    chatData.put("lastMessage", "");
+                    chatData.put("timestamp", new Date().getTime());
+                    if (jobId != null) {
+                        chatData.put("jobId", jobId);
+                    }
+                    if (jobTitle != null) {
+                        chatData.put("jobTitle", jobTitle);
+                    } else if (jobId != null) {
+                        // Fetch jobTitle if not provided
+                        db.collection("jobs").document(jobId)
+                                .get()
+                                .addOnSuccessListener(jobSnapshot -> {
+                                    if (jobSnapshot.exists()) {
+                                        String fetchedJobTitle = jobSnapshot.getString("title");
+                                        if (fetchedJobTitle != null) {
+                                            chatRef.update("jobTitle", fetchedJobTitle)
+                                                    .addOnFailureListener(e -> Log.e("ChatActivity", "Failed to update jobTitle", e));
+                                        }
+                                    }
+                                })
+                                .addOnFailureListener(e -> Log.e("ChatActivity", "Failed to fetch job", e));
+                    }
 
-                chatRef.set(chatData)
-                        .addOnFailureListener(e -> Log.e("ChatActivity", "Failed to initialize chat", e));
+                    chatRef.set(chatData)
+                            .addOnFailureListener(e -> Log.e("ChatActivity", "Failed to initialize chat", e));
+                } else if (jobTitle != null && snapshot.getString("jobTitle") == null) {
+                    // Update existing chat with jobTitle if not already set
+                    chatRef.update("jobTitle", jobTitle)
+                            .addOnFailureListener(e -> Log.e("ChatActivity", "Failed to update jobTitle", e));
+                }
+            } else {
+                Log.e("ChatActivity", "Error checking chat existence", task.getException());
             }
         });
     }
@@ -305,7 +333,10 @@ public class ChatActivity extends AppCompatActivity {
         metadata.put("lastMessage", lastMessage);
         metadata.put("timestamp", new Date().getTime());
         if (jobId != null) {
-            metadata.put("jobId", jobId); // Optional: Update jobId in metadata
+            metadata.put("jobId", jobId);
+        }
+        if (jobTitle != null) {
+            metadata.put("jobTitle", jobTitle);
         }
 
         db.collection("chats")

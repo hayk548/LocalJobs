@@ -35,8 +35,7 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
         this.jobList = jobList;
         this.context = context;
         this.db = FirebaseFirestore.getInstance();
-        // Specify the region where your Cloud Function is deployed (e.g., "us-central1")
-        this.functions = FirebaseFunctions.getInstance("us-central1"); // Change to your region if different
+        this.functions = FirebaseFunctions.getInstance("us-central1");
     }
 
     @Override
@@ -57,7 +56,6 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
         String currentUserId = (currentUser != null) ? currentUser.getUid() : "";
 
-        // Set common job details
         holder.jobTitle.setText(job.getTitle());
         holder.jobCategory.setText(job.getCategory());
         holder.jobDescription.setText(job.getDescription());
@@ -65,16 +63,13 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
         int categoryImageResId = getCategoryImage(job.getCategory());
         holder.jobCategoryImage.setImageResource(categoryImageResId);
 
-        // Check if the user has already applied for this job
         db.collection("applications")
                 .whereEqualTo("jobId", job.getJobId())
                 .whereEqualTo("userId", currentUserId)
                 .get()
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful() && task.getResult().isEmpty()) {
-                        // User has not applied yet
                         if (job.getUserId() != null && job.getUserId().equals(currentUserId)) {
-                            // Job is mine: Show settings icon with dropdown
                             holder.settingsButton.setVisibility(View.VISIBLE);
                             holder.applyButton.setVisibility(View.GONE);
                             holder.chatButton.setVisibility(View.GONE);
@@ -115,7 +110,6 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
                                 popup.show();
                             });
                         } else {
-                            // Job is not mine: Show small Apply and Chat buttons
                             holder.settingsButton.setVisibility(View.GONE);
                             holder.applyButton.setVisibility(View.VISIBLE);
                             holder.chatButton.setVisibility(View.VISIBLE);
@@ -126,6 +120,7 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
                                     Intent intent = new Intent(context, ChatActivity.class);
                                     intent.putExtra("receiverId", jobPosterId);
                                     intent.putExtra("jobId", job.getJobId());
+                                    intent.putExtra("jobTitle", job.getTitle()); // Pass job title
                                     context.startActivity(intent);
                                 } else {
                                     Toast.makeText(context, "You cannot chat with yourself", Toast.LENGTH_SHORT).show();
@@ -133,23 +128,18 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
                             });
 
                             holder.applyButton.setOnClickListener(v -> {
-                                // Fetch applicant details from Firestore
                                 db.collection("users").document(currentUserId).get()
                                         .addOnSuccessListener(documentSnapshot -> {
                                             if (documentSnapshot.exists()) {
-                                                // Get username from User class
                                                 User applicant = documentSnapshot.toObject(User.class);
                                                 String applicantUsername = applicant != null && applicant.getUsername() != null ? applicant.getUsername() : "Unknown";
-                                                // Get email from FirebaseAuth
                                                 String applicantEmail = currentUser != null && currentUser.getEmail() != null ? currentUser.getEmail() : "Unknown";
 
-                                                // Fetch job creator's FCM token
                                                 db.collection("users").document(job.getUserId()).get()
                                                         .addOnSuccessListener(creatorSnapshot -> {
                                                             if (creatorSnapshot.exists()) {
                                                                 String creatorFcmToken = creatorSnapshot.getString("fcmToken");
                                                                 if (creatorFcmToken != null && !creatorFcmToken.isEmpty()) {
-                                                                    // Proceed with application logic first
                                                                     Application jobApplication = new Application(
                                                                             job.getJobId(),
                                                                             currentUserId,
@@ -161,7 +151,6 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
                                                                     db.collection("applications").add(jobApplication)
                                                                             .addOnSuccessListener(documentReference -> {
                                                                                 Toast.makeText(context, "Successfully applied for the job!", Toast.LENGTH_SHORT).show();
-                                                                                // Send notification to job creator
                                                                                 sendNotificationToCreator(
                                                                                         creatorFcmToken,
                                                                                         job.getTitle(),
@@ -169,20 +158,8 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
                                                                                         applicantEmail,
                                                                                         job.getJobId()
                                                                                 );
-                                                                                // Remove job from list
                                                                                 jobList.remove(position);
                                                                                 notifyItemRemoved(position);
-                                                                                // Comment out job deletion to allow multiple applicants
-                                                                                /*
-                                                                                db.collection("jobs").document(job.getJobId())
-                                                                                        .delete()
-                                                                                        .addOnSuccessListener(aVoid -> {
-                                                                                            Toast.makeText(context, "Job deleted successfully!", Toast.LENGTH_SHORT).show();
-                                                                                        })
-                                                                                        .addOnFailureListener(e -> {
-                                                                                            Toast.makeText(context, "Failed to delete job: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-                                                                                        });
-                                                                                */
                                                                             })
                                                                             .addOnFailureListener(e -> {
                                                                                 Toast.makeText(context, "Failed to apply: " + e.getMessage(), Toast.LENGTH_SHORT).show();
@@ -213,7 +190,6 @@ public class JobAdapter extends RecyclerView.Adapter<JobAdapter.JobViewHolder> {
                             });
                         }
                     } else {
-                        // User has already applied: Hide the item
                         jobList.remove(position);
                         notifyItemRemoved(position);
                     }

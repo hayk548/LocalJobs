@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class ChatsActivity extends AppCompatActivity {
     private RecyclerView chatsRecyclerView;
@@ -57,7 +58,8 @@ public class ChatsActivity extends AppCompatActivity {
 
         chatUsers = new ArrayList<>();
         filteredChatUsers = new ArrayList<>();
-        chatListAdapter = new ChatListAdapter(this, filteredChatUsers, (receiverId) -> startChatActivity(receiverId, null));        chatsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
+        chatListAdapter = new ChatListAdapter(this, filteredChatUsers, receiverId -> startChatActivity(receiverId, null));
+        chatsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
         chatsRecyclerView.setAdapter(chatListAdapter);
 
         loadChats();
@@ -70,7 +72,7 @@ public class ChatsActivity extends AppCompatActivity {
         openMapButton.setOnClickListener(v -> navigateTo(MapsActivity2.class));
     }
 
-    private void startChatActivity(String receiverId, String jobId) { // Add jobId parameter
+    private void startChatActivity(String receiverId, String jobId) {
         Intent intent = new Intent(ChatsActivity.this, ChatActivity.class);
         intent.putExtra("receiverId", receiverId);
         if (jobId != null) {
@@ -107,34 +109,59 @@ public class ChatsActivity extends AppCompatActivity {
         chatUsers.clear();
 
         for (DocumentSnapshot doc : querySnapshot.getDocuments()) {
-            ChatMetadata chatMetadata = doc.toObject(ChatMetadata.class);
-            if (chatMetadata != null) {
-                List<String> users = (List<String>) doc.get("users");
-                String otherUserId = users.get(0).equals(currentUserId) ? users.get(1) : users.get(0);
-                String chatId = doc.getId();
+            List<String> users = (List<String>) doc.get("users");
+            if (users == null || users.size() < 2) continue;
 
-                if (!uniqueChatUsers.contains(otherUserId)) {
-                    uniqueChatUsers.add(otherUserId);
-                    // Fetch username from users collection
-                    db.collection("users").document(otherUserId).get()
-                            .addOnSuccessListener(userDoc -> {
-                                String username = userDoc.exists() ? userDoc.getString("username") : "Unknown User";
-                                if (username == null) username = otherUserId; // Fallback to UID if username is null
-                                chatUsers.add(new ChatUser(chatId, otherUserId, username, chatMetadata.getLastMessage()));
-                                filteredChatUsers.clear();
-                                filteredChatUsers.addAll(chatUsers);
-                                chatListAdapter.notifyDataSetChanged();
-                            })
-                            .addOnFailureListener(e -> {
-                                Log.e("ChatsActivity", "Error fetching username for userId: " + otherUserId, e);
-                                chatUsers.add(new ChatUser(chatId, otherUserId, otherUserId, chatMetadata.getLastMessage()));
-                                filteredChatUsers.clear();
-                                filteredChatUsers.addAll(chatUsers);
-                                chatListAdapter.notifyDataSetChanged();
-                            });
-                }
+            String otherUserId = users.get(0).equals(currentUserId) ? users.get(1) : users.get(0);
+            String chatId = doc.getId();
+            String lastMessage = doc.getString("lastMessage");
+            String jobTitle = doc.getString("jobTitle");
+            String jobId = doc.getString("jobId");
+
+            if (!uniqueChatUsers.contains(otherUserId)) {
+                uniqueChatUsers.add(otherUserId);
+
+                AtomicReference<String> usernameRef = new AtomicReference<>("Unknown User");
+                db.collection("users").document(otherUserId).get()
+                        .addOnSuccessListener(userDoc -> {
+                            String username = userDoc.exists() ? userDoc.getString("username") : "Unknown User";
+                            if (username == null) username = otherUserId;
+                            usernameRef.set(username);
+
+                            if (jobTitle != null) {
+                                addChatUser(chatId, otherUserId, usernameRef.get(), lastMessage, jobTitle);
+                            } else if (jobId != null) {
+                                db.collection("jobs").document(jobId).get()
+                                        .addOnSuccessListener(jobDoc -> {
+                                            String fetchedJobTitle = jobDoc.exists() ? jobDoc.getString("title") : null;
+                                            if (fetchedJobTitle != null) {
+                                                db.collection("chats").document(chatId)
+                                                        .update("jobTitle", fetchedJobTitle)
+                                                        .addOnFailureListener(e -> Log.e("ChatsActivity", "Failed to update jobTitle", e));
+                                            }
+                                            addChatUser(chatId, otherUserId, usernameRef.get(), lastMessage, fetchedJobTitle);
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            Log.e("ChatsActivity", "Error fetching job title for jobId: " + jobId, e);
+                                            addChatUser(chatId, otherUserId, usernameRef.get(), lastMessage, null);
+                                        });
+                            } else {
+                                addChatUser(chatId, otherUserId, usernameRef.get(), lastMessage, null);
+                            }
+                        })
+                        .addOnFailureListener(e -> {
+                            Log.e("ChatsActivity", "Error fetching username for userId: " + otherUserId, e);
+                            addChatUser(chatId, otherUserId, otherUserId, lastMessage, jobTitle);
+                        });
             }
         }
+    }
+
+    private void addChatUser(String chatId, String userId, String username, String lastMessage, String jobTitle) {
+        chatUsers.add(new ChatUser(chatId, userId, username, lastMessage, jobTitle));
+        filteredChatUsers.clear();
+        filteredChatUsers.addAll(chatUsers);
+        chatListAdapter.notifyDataSetChanged();
     }
 
     private void setupSearchBar() {
@@ -159,7 +186,8 @@ public class ChatsActivity extends AppCompatActivity {
         } else {
             String lowerQuery = query.toLowerCase();
             for (ChatUser user : chatUsers) {
-                if (user.getUsername().toLowerCase().contains(lowerQuery) || // Filter by username
+                String usernameWithJob = user.getUsername().toLowerCase();
+                if (usernameWithJob.contains(lowerQuery) ||
                         (user.getLastMessage() != null && user.getLastMessage().toLowerCase().contains(lowerQuery))) {
                     filteredChatUsers.add(user);
                 }
