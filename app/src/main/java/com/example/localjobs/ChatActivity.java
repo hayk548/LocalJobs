@@ -11,14 +11,17 @@ import android.text.TextWatcher;
 import android.util.Base64;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewTreeObserver;
 import android.view.Window;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -44,6 +47,8 @@ public class ChatActivity extends AppCompatActivity {
     private ImageView buttonSend;
     private TextView typingIndicator, creatorInfoTextView;
     private ImageButton backButton, menuButton;
+    private ConstraintLayout rootLayout;
+    private LinearLayout layoutMessage;
     private List<ChatMessage> chatMessages;
     private ChatAdapter chatAdapter;
     private FirebaseAuth mAuth;
@@ -52,6 +57,8 @@ public class ChatActivity extends AppCompatActivity {
     private String chatId;
     private ListenerRegistration messagesListener;
     private ListenerRegistration typingListener;
+    private int keyboardHeight = 0;
+    private boolean isKeyboardVisible = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +70,7 @@ public class ChatActivity extends AppCompatActivity {
             window.setStatusBarColor(getResources().getColor(R.color.light_blue));
         }
 
+        rootLayout = findViewById(R.id.rootLayout);
         recyclerChat = findViewById(R.id.recyclerChat);
         editMessage = findViewById(R.id.editMessage);
         buttonSend = findViewById(R.id.buttonSend);
@@ -70,6 +78,7 @@ public class ChatActivity extends AppCompatActivity {
         creatorInfoTextView = findViewById(R.id.creatorInfoTextView);
         backButton = findViewById(R.id.backButton);
         menuButton = findViewById(R.id.menuButton);
+        layoutMessage = findViewById(R.id.layoutMessage);
 
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
@@ -101,6 +110,69 @@ public class ChatActivity extends AppCompatActivity {
         setupTypingIndicator();
         loadMessages();
         fetchCreatorAndJobInfo();
+        setupKeyboardListener();
+    }
+
+    private void setupKeyboardListener() {
+        rootLayout.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+            @Override
+            public void onGlobalLayout() {
+                int rootHeight = rootLayout.getRootView().getHeight();
+                int layoutHeight = rootLayout.getHeight();
+                int heightDiff = rootHeight - layoutHeight;
+                int statusBarHeight = 0;
+                int resourceId = getResources().getIdentifier("status_bar_height", "dimen", "android");
+                if (resourceId > 0) {
+                    statusBarHeight = getResources().getDimensionPixelSize(resourceId);
+                }
+
+                // Log for debugging
+                Log.d("ChatActivity", "HeightDiff: " + heightDiff + ", StatusBarHeight: " + statusBarHeight);
+
+                if (heightDiff > statusBarHeight + 200) { // Adjusted threshold for keyboard detection
+                    keyboardHeight = heightDiff - statusBarHeight;
+                    if (!isKeyboardVisible) {
+                        isKeyboardVisible = true;
+                        adjustLayoutForKeyboard(true);
+                        Log.d("ChatActivity", "Keyboard shown, height: " + keyboardHeight);
+                    }
+                } else {
+                    if (isKeyboardVisible) {
+                        isKeyboardVisible = false;
+                        adjustLayoutForKeyboard(false);
+                        Log.d("ChatActivity", "Keyboard hidden");
+                    }
+                }
+            }
+        });
+
+        editMessage.setOnFocusChangeListener((v, hasFocus) -> {
+            if (hasFocus) {
+                recyclerChat.post(() -> recyclerChat.smoothScrollToPosition(chatMessages.size() - 1));
+                if (isKeyboardVisible) {
+                    adjustLayoutForKeyboard(true);
+                }
+            }
+        });
+    }
+
+    private void adjustLayoutForKeyboard(boolean keyboardVisible) {
+        if (keyboardVisible) {
+            // Translate the layoutMessage up by the keyboard height
+            layoutMessage.setTranslationY(-keyboardHeight);
+            typingIndicator.setTranslationY(-keyboardHeight);
+            Log.d("ChatActivity", "Adjusting layout, translationY: " + (-keyboardHeight));
+        } else {
+            // Reset translation
+            layoutMessage.setTranslationY(0);
+            typingIndicator.setTranslationY(0);
+            Log.d("ChatActivity", "Resetting layout");
+        }
+
+        // Scroll to the latest message
+        if (keyboardVisible && !chatMessages.isEmpty()) {
+            recyclerChat.post(() -> recyclerChat.smoothScrollToPosition(chatMessages.size() - 1));
+        }
     }
 
     private void fetchCreatorAndJobInfo() {
@@ -108,15 +180,13 @@ public class ChatActivity extends AppCompatActivity {
         chatRef.get().addOnSuccessListener(chatSnapshot -> {
             String storedJobTitle = chatSnapshot.exists() ? chatSnapshot.getString("jobTitle") : null;
             if (storedJobTitle != null) {
-                jobTitle = storedJobTitle; // Use stored jobTitle if available
+                jobTitle = storedJobTitle;
             } else if (jobId != null && jobTitle == null) {
-                // Fetch jobTitle from jobs collection if not passed and not stored
                 db.collection("jobs").document(jobId)
                         .get()
                         .addOnSuccessListener(jobSnapshot -> {
                             if (jobSnapshot.exists()) {
                                 jobTitle = jobSnapshot.getString("title");
-                                // Update Firestore with fetched jobTitle
                                 if (jobTitle != null) {
                                     chatRef.update("jobTitle", jobTitle)
                                             .addOnFailureListener(e -> Log.e("ChatActivity", "Failed to update jobTitle", e));
@@ -210,7 +280,6 @@ public class ChatActivity extends AppCompatActivity {
                     if (jobTitle != null) {
                         chatData.put("jobTitle", jobTitle);
                     } else if (jobId != null) {
-                        // Fetch jobTitle if not provided
                         db.collection("jobs").document(jobId)
                                 .get()
                                 .addOnSuccessListener(jobSnapshot -> {
@@ -228,7 +297,6 @@ public class ChatActivity extends AppCompatActivity {
                     chatRef.set(chatData)
                             .addOnFailureListener(e -> Log.e("ChatActivity", "Failed to initialize chat", e));
                 } else if (jobTitle != null && snapshot.getString("jobTitle") == null) {
-                    // Update existing chat with jobTitle if not already set
                     chatRef.update("jobTitle", jobTitle)
                             .addOnFailureListener(e -> Log.e("ChatActivity", "Failed to update jobTitle", e));
                 }

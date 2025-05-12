@@ -2,12 +2,13 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/rootLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F7FA">
+    android:background="#F5F7FA"
+    android:fitsSystemWindows="true">
 
     <!-- Top Bar -->
-
     <ImageButton
         android:id="@+id/backButton"
         android:layout_width="wrap_content"
@@ -36,7 +37,6 @@
         app:layout_constraintEnd_toStartOf="@id/menuButton"
         tools:text="John Doe - Barista Job" />
 
-    <!-- Chat RecyclerView -->
     <ImageButton
         android:id="@+id/menuButton"
         android:layout_width="wrap_content"
@@ -50,6 +50,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Chat RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerChat"
         android:layout_width="0dp"
